@@ -21,28 +21,28 @@ This project deploys a complete monitoring stack for your DigitalOcean VPC, foll
 ┌─────────────────────────────────────────────────────────────┐
 │                     rcj-vpc-nyc3                            │
 │                                                             │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │ rc-journey-wp│    │ foundry-vtt  │    │   Future     │  │
-│  │  (WordPress) │    │  (Game Srv)  │    │   Clients    │  │
-│  │              │    │              │    │              │  │
-│  │ node_exporter│    │ node_exporter│    │ node_exporter│  │
-│  │   promtail   │    │   promtail   │    │   promtail   │  │
-│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘  │
-│         │                   │                   │          │
-│         └───────────────────┼───────────────────┘          │
-│                   (VPC Internal)                           │
-│                             │                              │
-│                             ▼                              │
-│                   ┌──────────────────┐                     │
-│                   │  rcj-management  │                     │
-│                   │  ──────────────  │                     │
-│                   │  • Prometheus    │◄──── Tailscale ────►│ You
-│                   │  • Grafana       │     (secure access) │
-│                   │  • Loki          │                     │
-│                   │  • Alertmanager  │                     │
-│                   └────────┬─────────┘                     │
-│                            │                               │
-└────────────────────────────┼───────────────────────────────┘
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
+│  │ rc-journey-wp│    │ foundry-vtt  │    │   Future     │   │
+│  │  (WordPress) │    │  (Game Srv)  │    │   Clients    │   │
+│  │              │    │              │    │              │   │
+│  │ node_exporter│    │ node_exporter│    │ node_exporter│   │
+│  │   promtail   │    │   promtail   │    │   promtail   │   │
+│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘   │
+│         │                   │                   │           │
+│         └───────────────────┼───────────────────┘           │
+│                   (VPC Internal)                            │
+│                             │                               │
+│                             ▼                               │
+│                   ┌──────────────────┐                      │
+│                   │  rcj-management  │                      │
+│                   │  ──────────────  │                      │
+│                   │  • Prometheus    │◄──── Tailscale ────► │ You
+│                   │  • Grafana       │     (secure access)  │
+│                   │  • Loki          │                      │
+│                   │  • Alertmanager  │                      │
+│                   └────────┬─────────┘                      │
+│                            │                                │
+└────────────────────────────┼────────────────────────────────┘
                              │
                              ▼
                    ┌──────────────────┐
