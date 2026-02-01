@@ -1,0 +1,50 @@
+# =============================================================================
+# Common Role - Basic System Configuration
+# =============================================================================
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install essential packages
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - vim
+      - htop
+      - unzip
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - python3-pip
+      - python3-setuptools
+      - software-properties-common
+    state: present
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone | default('America/New_York') }}"
+
+- name: Configure automatic security updates
+  apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Enable automatic security updates
+  copy:
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+      APT::Periodic::AutocleanInterval "7";
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: '0644'
+
+- name: Create project directory
+  file:
+    path: "{{ project_dir | default('/opt/rcj-monitoring') }}"
+    state: directory
+    mode: '0755'

@@ -1,0 +1,118 @@
+# =============================================================================
+# Security Role - System Hardening
+# =============================================================================
+---
+- name: Install security packages
+  apt:
+    name:
+      - fail2ban
+      - ufw
+    state: present
+
+# ---------------------------------------------------------------------------
+# SSH Hardening
+# ---------------------------------------------------------------------------
+- name: Disable root password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin prohibit-password'
+    state: present
+  notify: Restart SSH
+
+- name: Disable password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+  notify: Restart SSH
+
+- name: Disable empty passwords
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitEmptyPasswords'
+    line: 'PermitEmptyPasswords no'
+    state: present
+  notify: Restart SSH
+
+# ---------------------------------------------------------------------------
+# Fail2ban Configuration
+# ---------------------------------------------------------------------------
+- name: Configure fail2ban for SSH
+  copy:
+    content: |
+      [sshd]
+      enabled = true
+      port = ssh
+      filter = sshd
+      logpath = /var/log/auth.log
+      maxretry = 5
+      bantime = 3600
+      findtime = 600
+    dest: /etc/fail2ban/jail.local
+    mode: '0644'
+  notify: Restart fail2ban
+
+- name: Start and enable fail2ban
+  systemd:
+    name: fail2ban
+    state: started
+    enabled: yes
+
+# ---------------------------------------------------------------------------
+# UFW Firewall
+# ---------------------------------------------------------------------------
+- name: Set UFW default incoming policy to deny
+  ufw:
+    direction: incoming
+    policy: deny
+
+- name: Set UFW default outgoing policy to allow
+  ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Allow SSH through UFW
+  ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+
+- name: Allow Prometheus (VPC only)
+  ufw:
+    rule: allow
+    port: '9090'
+    proto: tcp
+    from_ip: "{{ vpc_cidr | default('10.108.0.0/20') }}"
+
+- name: Allow Loki (VPC only)
+  ufw:
+    rule: allow
+    port: '3100'
+    proto: tcp
+    from_ip: "{{ vpc_cidr | default('10.108.0.0/20') }}"
+
+- name: Allow Grafana
+  ufw:
+    rule: allow
+    port: '3000'
+    proto: tcp
+
+- name: Allow Alertmanager (VPC only)
+  ufw:
+    rule: allow
+    port: '9093'
+    proto: tcp
+    from_ip: "{{ vpc_cidr | default('10.108.0.0/20') }}"
+
+- name: Allow Node Exporter (VPC only)
+  ufw:
+    rule: allow
+    port: '9100'
+    proto: tcp
+    from_ip: "{{ vpc_cidr | default('10.108.0.0/20') }}"
+
+- name: Enable UFW
+  ufw:
+    state: enabled

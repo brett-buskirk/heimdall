@@ -1,0 +1,133 @@
+# =============================================================================
+# Prometheus Alerting Rules
+# =============================================================================
+# Critical alerts for rcj-vpc-nyc3 infrastructure
+# =============================================================================
+
+groups:
+  # ---------------------------------------------------------------------------
+  # Node Health Alerts
+  # ---------------------------------------------------------------------------
+  - name: node_health
+    rules:
+      # Instance down for more than 2 minutes
+      - alert: InstanceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} ({{ $labels.job }}) has been down for more than 2 minutes."
+
+      # High CPU usage (>85% for 5 minutes)
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 85% (current: {{ $value | printf \"%.1f\" }}%)"
+
+      # High memory usage (>90%)
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 90% (current: {{ $value | printf \"%.1f\" }}%)"
+
+      # Critical memory usage (>95%)
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 95% (current: {{ $value | printf \"%.1f\" }}%). Service degradation likely."
+
+      # Disk space low (<20% free)
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk {{ $labels.mountpoint }} has less than 20% free space (current: {{ $value | printf \"%.1f\" }}%)"
+
+      # Disk space critical (<10% free)
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 < 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Disk {{ $labels.mountpoint }} has less than 10% free space (current: {{ $value | printf \"%.1f\" }}%)"
+
+  # ---------------------------------------------------------------------------
+  # Service-Specific Alerts
+  # ---------------------------------------------------------------------------
+  - name: services
+    rules:
+      # Foundry VTT server down
+      - alert: FoundryVTTDown
+        expr: up{instance="foundry-vtt"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: foundry
+        annotations:
+          summary: "🎲 Foundry VTT server is DOWN!"
+          description: "The Foundry VTT server has been unreachable for more than 1 minute. Your players can't connect!"
+
+      # WordPress server down
+      - alert: WordPressDown
+        expr: up{instance="rc-journey-wp"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: wordpress
+        annotations:
+          summary: "📝 WordPress server is DOWN!"
+          description: "The RC Journey WordPress site has been unreachable for more than 2 minutes."
+
+  # ---------------------------------------------------------------------------
+  # Monitoring Stack Health
+  # ---------------------------------------------------------------------------
+  - name: monitoring_health
+    rules:
+      # Prometheus target scrape failures
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus target missing: {{ $labels.instance }}"
+          description: "A Prometheus target has been down for more than 5 minutes."
+
+      # Loki not receiving logs
+      - alert: LokiNotReceivingLogs
+        expr: sum(rate(loki_distributor_lines_received_total[5m])) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Loki is not receiving any logs"
+          description: "No logs have been received by Loki in the last 10 minutes."
+
+      # Alertmanager not connected
+      - alert: AlertmanagerNotConnected
+        expr: prometheus_notifications_alertmanagers_discovered < 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Alertmanager is not connected to Prometheus"
+          description: "Alerts will not be sent! Check Alertmanager configuration."

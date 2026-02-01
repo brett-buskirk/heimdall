@@ -1,0 +1,112 @@
+# =============================================================================
+# Promtail Agent Role - Deploy to Application Servers
+# =============================================================================
+# Installs Promtail as a systemd service for log shipping to Loki
+# =============================================================================
+---
+- name: Check if promtail is installed
+  stat:
+    path: /usr/local/bin/promtail
+  register: promtail_binary
+
+- name: Get latest promtail version
+  uri:
+    url: https://api.github.com/repos/grafana/loki/releases/latest
+    return_content: yes
+  register: promtail_latest
+  when: not promtail_binary.stat.exists
+
+- name: Set promtail version
+  set_fact:
+    promtail_version: "{{ promtail_latest.json.tag_name | regex_replace('^v', '') }}"
+  when: not promtail_binary.stat.exists
+
+- name: Download promtail
+  unarchive:
+    src: "https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip"
+    dest: /tmp
+    remote_src: yes
+  when: not promtail_binary.stat.exists
+
+- name: Install promtail binary
+  copy:
+    src: /tmp/promtail-linux-amd64
+    dest: /usr/local/bin/promtail
+    remote_src: yes
+    mode: '0755'
+    owner: root
+    group: root
+  when: not promtail_binary.stat.exists
+  notify: Restart promtail
+
+- name: Create promtail user
+  user:
+    name: promtail
+    system: yes
+    shell: /bin/false
+    create_home: no
+    groups: adm  # For reading /var/log files
+
+- name: Create promtail config directory
+  file:
+    path: /etc/promtail
+    state: directory
+    mode: '0755'
+
+- name: Create promtail data directory
+  file:
+    path: /var/lib/promtail
+    state: directory
+    owner: promtail
+    group: promtail
+    mode: '0755'
+
+- name: Deploy promtail configuration
+  template:
+    src: promtail-config.yml.j2
+    dest: /etc/promtail/promtail-config.yml
+    mode: '0644'
+  notify: Restart promtail
+
+- name: Create promtail systemd service
+  copy:
+    content: |
+      [Unit]
+      Description=Promtail Log Shipper
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User=promtail
+      Group=promtail
+      Type=simple
+      ExecStart=/usr/local/bin/promtail -config.file=/etc/promtail/promtail-config.yml
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/promtail.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart promtail
+
+- name: Start and enable promtail
+  systemd:
+    name: promtail
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+# Handlers
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  listen: Reload systemd
+
+- name: Restart promtail
+  systemd:
+    name: promtail
+    state: restarted
+  listen: Restart promtail

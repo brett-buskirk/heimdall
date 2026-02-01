@@ -1,0 +1,103 @@
+# =============================================================================
+# Promtail Configuration - {{ inventory_hostname }}
+# =============================================================================
+# Ansible Managed - Do not edit directly
+# =============================================================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: {{ loki_url }}
+
+scrape_configs:
+  # System logs
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          host: {{ inventory_hostname }}
+          __path__: /var/log/*.log
+
+  # Syslog
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          host: {{ inventory_hostname }}
+          __path__: /var/log/syslog
+
+  # Auth logs (SSH, sudo, etc.)
+  - job_name: auth
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: auth
+          host: {{ inventory_hostname }}
+          __path__: /var/log/auth.log
+
+{% if 'wordpress' in inventory_hostname or 'wp' in inventory_hostname %}
+  # WordPress / Apache logs
+  - job_name: apache
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: apache
+          host: {{ inventory_hostname }}
+          __path__: /var/log/apache2/*.log
+
+  - job_name: wordpress
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: wordpress
+          host: {{ inventory_hostname }}
+          __path__: /var/www/*/wp-content/debug.log
+{% endif %}
+
+{% if 'foundry' in inventory_hostname %}
+  # Foundry VTT logs (Docker)
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          host: {{ inventory_hostname }}
+          __path__: /var/lib/docker/containers/*/*-json.log
+    pipeline_stages:
+      - json:
+          expressions:
+            log: log
+            stream: stream
+            time: time
+      - labels:
+          stream:
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+      - output:
+          source: log
+{% endif %}
+
+  # Journal (systemd)
+  - job_name: journal
+    journal:
+      max_age: 12h
+      labels:
+        job: systemd-journal
+        host: {{ inventory_hostname }}
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        target_label: 'unit'

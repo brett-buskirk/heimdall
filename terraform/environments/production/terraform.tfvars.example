@@ -1,0 +1,51 @@
+# =============================================================================
+# Terraform Variables - Production Environment
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values.
+# NEVER commit terraform.tfvars to version control!
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# DigitalOcean Authentication
+# -----------------------------------------------------------------------------
+# Get your API token from: https://cloud.digitalocean.com/account/api/tokens
+# Get Spaces keys from: https://cloud.digitalocean.com/spaces/access_keys
+
+do_token          = "dop_v1_your_api_token_here"
+spaces_access_id  = "your_spaces_access_key"
+spaces_secret_key = "your_spaces_secret_key"
+
+# -----------------------------------------------------------------------------
+# Infrastructure Configuration
+# -----------------------------------------------------------------------------
+
+region           = "nyc3"
+vpc_name         = "rcj-vpc-nyc3"
+ssh_fingerprint  = "your_ssh_key_fingerprint"  # From: doctl compute ssh-key list
+
+# -----------------------------------------------------------------------------
+# Management Node
+# -----------------------------------------------------------------------------
+
+management_node_size = "s-2vcpu-4gb"  # ~$24/mo - 4GB RAM, 2 vCPU
+log_bucket_name      = "rcj-logs-nyc3"
+
+# -----------------------------------------------------------------------------
+# Security
+# -----------------------------------------------------------------------------
+
+# Restrict SSH to specific IPs (recommended)
+# ssh_allowed_ips = ["your.home.ip/32", "your.work.ip/32"]
+
+# Default: Allow SSH from anywhere (less secure but convenient for nomadic use)
+ssh_allowed_ips = ["0.0.0.0/0", "::/0"]
+
+# Set to true if NOT using Tailscale and want Grafana publicly accessible
+enable_public_grafana = false
+
+# -----------------------------------------------------------------------------
+# Monitoring
+# -----------------------------------------------------------------------------
+
+grafana_domain = "grafana.rcjourney.cloud"
+alert_email    = "alerts@rcjourney.cloud"

@@ -1,0 +1,39 @@
+# =============================================================================
+# Ansible Group Variables - All Hosts
+# =============================================================================
+# Global variables for the rcj-infra project
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Environment
+# -----------------------------------------------------------------------------
+environment: production
+timezone: America/New_York
+
+# -----------------------------------------------------------------------------
+# VPC Configuration
+# -----------------------------------------------------------------------------
+vpc_cidr: "10.108.0.0/20"
+
+# -----------------------------------------------------------------------------
+# Monitoring Configuration
+# -----------------------------------------------------------------------------
+project_dir: /opt/rcj-monitoring
+grafana_admin_user: admin
+# grafana_admin_password: SET_IN_VAULT_OR_COMMAND_LINE
+grafana_root_url: "http://grafana.rcjourney.cloud"
+
+# Alert configuration
+alert_email: alerts@rcjourney.cloud
+
+# SMTP Configuration (for email alerts)
+# Uncomment and configure if using email alerts
+# smtp_host: "smtp.mailgun.org:587"
+# smtp_user: ""
+# smtp_password: ""
+
+# -----------------------------------------------------------------------------
+# Management Node
+# -----------------------------------------------------------------------------
+loki_server: "10.108.0.4"  # Update after Terraform deploy
+prometheus_server: "10.108.0.4"  # Update after Terraform deploy

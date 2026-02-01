@@ -1,0 +1,106 @@
+# =============================================================================
+# Prometheus Configuration
+# =============================================================================
+# Scrapes metrics from all nodes in the rcj-vpc-nyc3 VPC
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: production
+    vpc: rcj-vpc-nyc3
+
+# =============================================================================
+# Alerting Configuration
+# =============================================================================
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# =============================================================================
+# Rule Files
+# =============================================================================
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+# =============================================================================
+# Scrape Configurations
+# =============================================================================
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus Self-Monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          instance: 'rcj-management'
+
+  # ---------------------------------------------------------------------------
+  # Management Node - Node Exporter
+  # ---------------------------------------------------------------------------
+  - job_name: 'node-exporter-management'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          instance: 'rcj-management'
+          role: 'management'
+
+  # ---------------------------------------------------------------------------
+  # Application Servers - Node Exporter
+  # ---------------------------------------------------------------------------
+  # These targets use VPC private IPs for secure internal communication
+  # Update these IPs after running Ansible to deploy node_exporter
+  - job_name: 'node-exporter-apps'
+    static_configs:
+      # WordPress Server (rc-journey-wp)
+      - targets: ['10.108.0.2:9100']
+        labels:
+          instance: 'rc-journey-wp'
+          role: 'webserver'
+          app: 'wordpress'
+
+      # Foundry VTT Server
+      - targets: ['10.108.0.3:9100']
+        labels:
+          instance: 'foundry-vtt'
+          role: 'gameserver'
+          app: 'foundry'
+
+  # ---------------------------------------------------------------------------
+  # Loki Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+        labels:
+          instance: 'rcj-management'
+
+  # ---------------------------------------------------------------------------
+  # Grafana Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          instance: 'rcj-management'
+
+  # ---------------------------------------------------------------------------
+  # Alertmanager Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+        labels:
+          instance: 'rcj-management'
+
+  # ---------------------------------------------------------------------------
+  # Docker Container Metrics (Optional - via cAdvisor)
+  # ---------------------------------------------------------------------------
+  # Uncomment and add cAdvisor to docker-compose if you want container metrics
+  # - job_name: 'cadvisor'
+  #   static_configs:
+  #     - targets: ['cadvisor:8080']

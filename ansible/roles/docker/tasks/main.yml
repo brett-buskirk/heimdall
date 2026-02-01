@@ -1,0 +1,91 @@
+# =============================================================================
+# Docker Role - Install Docker and Docker Compose
+# =============================================================================
+---
+- name: Check if Docker is installed
+  command: docker --version
+  register: docker_installed
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install Docker using convenience script
+  when: docker_installed.rc != 0
+  block:
+    - name: Download Docker installation script
+      get_url:
+        url: https://get.docker.com
+        dest: /tmp/get-docker.sh
+        mode: '0755'
+
+    - name: Run Docker installation script
+      command: /tmp/get-docker.sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Remove installation script
+      file:
+        path: /tmp/get-docker.sh
+        state: absent
+
+- name: Ensure Docker service is started and enabled
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  when: ansible_user != 'root'
+
+- name: Install Docker Compose plugin
+  apt:
+    name: docker-compose-plugin
+    state: present
+  ignore_errors: yes
+
+# Fallback: Install Docker Compose standalone if plugin not available
+- name: Check for Docker Compose
+  command: docker compose version
+  register: compose_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install Docker Compose standalone (fallback)
+  when: compose_check.rc != 0
+  block:
+    - name: Download Docker Compose
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version | default('2.24.0') }}/docker-compose-linux-x86_64"
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    - name: Create symlink for docker compose command
+      file:
+        src: /usr/local/bin/docker-compose
+        dest: /usr/bin/docker-compose
+        state: link
+
+- name: Configure Docker daemon
+  copy:
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "storage-driver": "overlay2"
+      }
+    dest: /etc/docker/daemon.json
+    mode: '0644'
+  notify: Restart Docker
+
+# Handler inline since we need it immediately
+- name: Restart Docker
+  systemd:
+    name: docker
+    state: restarted
+  listen: Restart Docker
