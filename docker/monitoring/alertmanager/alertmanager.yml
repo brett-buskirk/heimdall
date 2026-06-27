@@ -8,7 +8,7 @@ global:
   # SMTP configuration for email alerts
   # Update these values in docker-compose.yml environment or use a .env file
   smtp_smarthost: 'smtp.mailgun.org:587'  # Or your preferred SMTP provider
-  smtp_from: 'alerts@rcjourney.cloud'
+  smtp_from: 'alerts@yourdomain.com'
   smtp_auth_username: ''  # Set via environment variable
   smtp_auth_password: ''  # Set via environment variable
   smtp_require_tls: true
@@ -57,7 +57,7 @@ receivers:
   # Standard email alerts
   - name: 'email-alerts'
     email_configs:
-      - to: 'alerts@rcjourney.cloud'
+      - to: 'alerts@yourdomain.com'
         send_resolved: true
         headers:
           Subject: '[RCJ-Infra] {{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
@@ -74,7 +74,7 @@ receivers:
   # Critical alerts with more urgency
   - name: 'email-critical'
     email_configs:
-      - to: 'alerts@rcjourney.cloud'
+      - to: 'alerts@yourdomain.com'
         send_resolved: true
         headers:
           Subject: '🚨 [CRITICAL] {{ .CommonLabels.alertname }} on {{ .CommonLabels.instance }}'
@@ -88,7 +88,7 @@ receivers:
           <p><b>Started:</b> {{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}</p>
           <hr>
           {{ end }}
-          <p><a href="http://grafana.rcjourney.cloud">Open Grafana Dashboard</a></p>
+          <p><a href="http://grafana:3000">Open Grafana Dashboard</a></p>
 
   # Uncomment to add Slack notifications
   # - name: 'slack-critical'

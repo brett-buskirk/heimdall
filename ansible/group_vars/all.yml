@@ -21,10 +21,10 @@ vpc_cidr: "10.108.0.0/20"
 project_dir: /opt/rcj-monitoring
 grafana_admin_user: admin
 # grafana_admin_password: SET_IN_VAULT_OR_COMMAND_LINE
-grafana_root_url: "http://grafana.rcjourney.cloud"
+grafana_root_url: "http://localhost:3000"  # Update to your Tailscale hostname or domain
 
 # Alert configuration
-alert_email: alerts@rcjourney.cloud
+alert_email: "alerts@yourdomain.com"  # Update to your alert destination
 
 # SMTP Configuration (for email alerts)
 # Uncomment and configure if using email alerts
@@ -35,5 +35,5 @@ alert_email: alerts@rcjourney.cloud
 # -----------------------------------------------------------------------------
 # Management Node
 # -----------------------------------------------------------------------------
-loki_server: "10.108.0.4"  # Update after Terraform deploy
-prometheus_server: "10.108.0.4"  # Update after Terraform deploy
+loki_server: "10.x.x.x"  # Set to management node VPC IP after terraform output
+prometheus_server: "10.x.x.x"  # Set to management node VPC IP after terraform output

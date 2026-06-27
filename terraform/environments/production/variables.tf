@@ -82,7 +82,7 @@ variable "enable_public_grafana" {
 # -----------------------------------------------------------------------------
 
 variable "grafana_domain" {
-  description = "Domain name for Grafana (e.g., grafana.rcjourney.cloud)"
+  description = "Domain name for Grafana (e.g., grafana.yourdomain.com)"
   type        = string
   default     = ""
 }

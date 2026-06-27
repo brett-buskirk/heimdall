@@ -47,5 +47,5 @@ enable_public_grafana = false
 # Monitoring
 # -----------------------------------------------------------------------------
 
-grafana_domain = "grafana.rcjourney.cloud"
-alert_email    = "alerts@rcjourney.cloud"
+grafana_domain = "grafana.yourdomain.com"
+alert_email    = "alerts@yourdomain.com"

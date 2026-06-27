@@ -8,8 +8,10 @@ set -e
 
 echo "🔐 Installing Tailscale..."
 
-# Install Tailscale
-curl -fsSL https://tailscale.com/install.sh | sh
+# Install Tailscale (staged to avoid piping curl directly to shell)
+curl -fsSL https://tailscale.com/install.sh -o /tmp/tailscale-install.sh
+sh /tmp/tailscale-install.sh
+rm -f /tmp/tailscale-install.sh
 
 # Start Tailscale and get auth URL
 echo ""

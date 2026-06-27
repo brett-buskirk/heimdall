@@ -3,7 +3,7 @@ global:
   resolve_timeout: 5m
 {% if smtp_host is defined and smtp_host %}
   smtp_smarthost: '{{ smtp_host }}'
-  smtp_from: '{{ alert_email | default("alerts@rcjourney.cloud") }}'
+  smtp_from: '{{ alert_email | default("alerts@yourdomain.com") }}'
   smtp_auth_username: '{{ smtp_user | default("") }}'
   smtp_auth_password: '{{ smtp_password | default("") }}'
   smtp_require_tls: true
@@ -30,14 +30,14 @@ route:
 receivers:
   - name: 'email-alerts'
     email_configs:
-      - to: '{{ alert_email | default("alerts@rcjourney.cloud") }}'
+      - to: '{{ alert_email | default("alerts@yourdomain.com") }}'
         send_resolved: true
         headers:
           Subject: '[RCJ-Infra] {% raw %}{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}{% endraw %}'
 
   - name: 'email-critical'
     email_configs:
-      - to: '{{ alert_email | default("alerts@rcjourney.cloud") }}'
+      - to: '{{ alert_email | default("alerts@yourdomain.com") }}'
         send_resolved: true
         headers:
           Subject: '🚨 [CRITICAL] {% raw %}{{ .CommonLabels.alertname }} on {{ .CommonLabels.instance }}{% endraw %}'

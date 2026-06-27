@@ -48,14 +48,14 @@ services:
     restart: unless-stopped
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-changeme}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:3000}
       - GF_SMTP_ENABLED=${SMTP_ENABLED:-false}
       - GF_SMTP_HOST=${SMTP_HOST:-}
       - GF_SMTP_USER=${SMTP_USER:-}
       - GF_SMTP_PASSWORD=${SMTP_PASSWORD:-}
-      - GF_SMTP_FROM_ADDRESS=${SMTP_FROM:-alerts@rcjourney.cloud}
+      - GF_SMTP_FROM_ADDRESS=${SMTP_FROM:-}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana_data:/var/lib/grafana

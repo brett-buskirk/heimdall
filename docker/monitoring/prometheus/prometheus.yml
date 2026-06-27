@@ -52,23 +52,22 @@ scrape_configs:
   # ---------------------------------------------------------------------------
   # Application Servers - Node Exporter
   # ---------------------------------------------------------------------------
-  # These targets use VPC private IPs for secure internal communication
-  # Update these IPs after running Ansible to deploy node_exporter
+  # These targets use VPC private IPs for secure internal communication.
+  # Replace with your actual node VPC IPs after Terraform + Ansible deploy.
+  # Get IPs from: terraform output  OR  doctl compute droplet list
   - job_name: 'node-exporter-apps'
     static_configs:
-      # WordPress Server (rc-journey-wp)
-      - targets: ['10.108.0.2:9100']
+      # Application Server 1 — replace IP and labels with your own
+      - targets: ['10.x.x.2:9100']
         labels:
-          instance: 'rc-journey-wp'
+          instance: 'app-server-1'
           role: 'webserver'
-          app: 'wordpress'
 
-      # Foundry VTT Server
-      - targets: ['10.108.0.3:9100']
+      # Application Server 2 — replace IP and labels with your own
+      - targets: ['10.x.x.3:9100']
         labels:
-          instance: 'foundry-vtt'
-          role: 'gameserver'
-          app: 'foundry'
+          instance: 'app-server-2'
+          role: 'appserver'
 
   # ---------------------------------------------------------------------------
   # Loki Metrics
