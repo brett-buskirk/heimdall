@@ -130,25 +130,25 @@ heimdall/
 The detailed, step-by-step deployment guide — with a worked example — is in **[CUSTOMIZATION.md](CUSTOMIZATION.md)**. The five-step summary:
 
 ```bash
-# 1. Clone and configure Terraform variables
+# 0. Clone, configure, and run the preflight check
 git clone https://github.com/brett-buskirk/heimdall.git
 cd heimdall
 cp terraform/environments/example/terraform.tfvars.example \
    terraform/environments/example/terraform.tfvars
 # Edit terraform.tfvars: do_token, project_name, vpc_name, ssh_fingerprint, ssh_allowed_ips
-
-# 2. Provision infrastructure
-cd terraform/environments/example
-terraform init && terraform apply
-
-# 3. Configure Ansible
 # Edit ansible/group_vars/all.yml: project_name, vpc_cidr
-# Edit ansible/inventory/manual.yml: management node IP
+./scripts/preflight.sh   # verify tools and config before applying
 
-# 4. Deploy the stack
-ansible-playbook -i ansible/inventory/manual.yml ansible/playbooks/management-node.yml
+# 1. Provision infrastructure
+cd terraform/environments/example && terraform init && terraform apply
 
-# 5. Install Tailscale on the management node and connect
+# 2. Deploy the monitoring stack
+ansible-playbook -i ansible/inventory/production.yml ansible/playbooks/management-node.yml
+
+# 3. Deploy agents to app nodes
+ansible-playbook -i ansible/inventory/production.yml ansible/playbooks/deploy-agents.yml
+
+# 4. Install Tailscale and connect
 scp scripts/setup-tailscale.sh root@<management_ip>:/tmp/
 ssh root@<management_ip> 'bash /tmp/setup-tailscale.sh && sudo tailscale up'
 ```
@@ -169,17 +169,25 @@ See [SECURITY.md](SECURITY.md) for the supported-version policy and how to repor
 
 ## Teardown
 
-```bash
-cd terraform/environments/example
+Stop the stack cleanly before destroying infrastructure:
 
-# Destroy compute but preserve log bucket and its data
+```bash
+# 1. Stop the monitoring stack and deregister from Tailscale
+ssh root@<management_node_ip> \
+  "cd /opt/<project_name>-monitoring && docker compose down && tailscale logout"
+
+# 2a. Destroy compute only — keep log bucket and its data
+cd terraform/environments/example
 terraform destroy \
   -target=module.management_node \
   -target=module.management_firewall
 
-# Full teardown (including Spaces bucket)
+# 2b. Full teardown including the Spaces bucket
+#     (bucket must be empty first — see CUSTOMIZATION.md if it has objects)
 terraform destroy
 ```
+
+See [CUSTOMIZATION.md](CUSTOMIZATION.md#teardown) for the complete teardown runbook, including how to empty the Spaces bucket and clean up local state files.
 
 ---
 
@@ -206,13 +214,14 @@ docker compose logs -f grafana
 
 | Document | Purpose |
 |---|---|
-| [CUSTOMIZATION.md](CUSTOMIZATION.md) | Step-by-step deployment guide with worked example |
+| [CUSTOMIZATION.md](CUSTOMIZATION.md) | Step-by-step deployment guide, remote state, teardown runbook |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Component map, data-flow, design decisions |
 | [docs/ABOUT.md](docs/ABOUT.md) | Plain-language overview — no jargon |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute, validation gates, conventions |
 | [SECURITY.md](SECURITY.md) | Vulnerability reporting and security posture |
 | [CHANGELOG.md](CHANGELOG.md) | Release history |
 | [ROADMAP.md](ROADMAP.md) | Planned phases and post-1.0 ideas |
+| [scripts/preflight.sh](scripts/preflight.sh) | Pre-deploy environment check |
 
 ---
 

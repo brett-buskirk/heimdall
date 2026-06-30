@@ -49,11 +49,10 @@
 
 ## v1.0.0 — Template release
 
-- [ ] `scripts/preflight.sh` — pre-deploy environment check
-- [ ] Remote state backend guide (DigitalOcean Spaces / S3)
-- [ ] Teardown runbook polished
-- [ ] Architecture diagram updated with generic labels
-- [ ] Tagged `v1.0.0` with release notes
+- [x] `scripts/preflight.sh` — pre-deploy environment check
+- [x] Remote state backend guide (DigitalOcean Spaces / S3) — in CUSTOMIZATION.md
+- [x] Teardown runbook polished — README + CUSTOMIZATION.md
+- [ ] Tagged `v1.0.0` with release notes *(pending end-to-end validation)*
 
 ## Post-1.0 ideas
 
