@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/brett-buskirk/heimdall#readme
+    about: Check the README for quickstart and configuration reference.
+  - name: Customization guide
+    url: https://github.com/brett-buskirk/heimdall/blob/main/CUSTOMIZATION.md
+    about: Step-by-step guide to deploying Heimdall for your org.
+  - name: Discussions
+    url: https://github.com/brett-buskirk/heimdall/discussions
+    about: Questions, ideas, and general discussion.
