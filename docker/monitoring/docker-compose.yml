@@ -1,7 +1,8 @@
 # =============================================================================
-# RCJ Monitoring Stack - Docker Compose
+# Monitoring Stack - Docker Compose
 # =============================================================================
-# A complete observability stack for the rcj-vpc-nyc3 infrastructure
+# A complete observability stack (Prometheus / Grafana / Loki / Alertmanager).
+# Deploy via Ansible playbooks for production; use this file for manual runs.
 #
 # Services:
 #   - Prometheus: Metrics collection and storage

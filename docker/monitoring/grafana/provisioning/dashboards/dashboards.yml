@@ -7,10 +7,10 @@
 apiVersion: 1
 
 providers:
-  - name: 'RCJ Infrastructure'
+  - name: 'Infrastructure'
     orgId: 1
-    folder: 'RCJ Infrastructure'
-    folderUid: rcj-infra
+    folder: 'Infrastructure'
+    folderUid: heimdall-infra
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30

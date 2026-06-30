@@ -8,29 +8,29 @@
 - [x] GitHub labels, milestones, project board
 - [x] Repo metadata and topics set
 
-## v0.1.0 — Generalize Terraform
+## v0.1.0 — Generalize Terraform ✅
 
-- [ ] Introduce `project_name` variable; thread through all resource names, tags, outputs
-- [ ] Remove every org-specific default (`rcj-vpc-nyc3`, `rcj-logs-nyc3`, `rcj-management`)
-- [ ] Rename `environments/production/` → `environments/example/`
-- [ ] Safe security defaults — `ssh_allowed_ips` required, documented
-- [ ] `terraform fmt -check` and `terraform validate` clean
+- [x] Introduce `project_name` variable; thread through all resource names, tags, outputs
+- [x] Remove every org-specific default (`rcj-vpc-nyc3`, `rcj-logs-nyc3`, `rcj-management`)
+- [x] Rename `environments/production/` → `environments/example/`
+- [x] Safe security defaults — `ssh_allowed_ips` required, documented
+- [x] `terraform fmt -check` and `terraform validate` clean
 
-## v0.2.0 — Generalize Ansible
+## v0.2.0 — Generalize Ansible ✅
 
-- [ ] Parameterize `group_vars/all.yml` — `project_name`, `vpc_cidr`, `project_dir`
-- [ ] Degenericize all roles and Jinja2 templates — no hardcoded `rcj-*` strings
-- [ ] Generic inventory example (replaces `inventory/manual.yml`)
-- [ ] `ansible-lint` clean
+- [x] Parameterize `group_vars/all.yml` — `project_name`, `vpc_cidr`, `project_dir`
+- [x] Degenericize all roles and Jinja2 templates — no hardcoded `rcj-*` strings
+- [x] Generic inventory example (replaces `inventory/manual.yml`)
+- [x] `ansible-lint` clean
 
-## v0.3.0 — App-agnostic monitoring
+## v0.3.0 — App-agnostic monitoring ✅
 
-- [ ] Replace hardcoded `rc-journey-wp` / `foundry-vtt` targets with a `monitored_nodes` list variable
-- [ ] Generic host dashboard (Grafana) — node health for any node
-- [ ] Generic node-health alert rules — `InstanceDown`, `HighCPU`, `HighMemory`, `DiskFull`
-- [ ] Generic Promtail config — journald + syslog by default; app overlays opt-in
-- [ ] Move WordPress / Foundry specifics to `examples/wordpress-foundry/`
-- [ ] Org-specific grep returns zero hits outside `examples/`
+- [x] Replace hardcoded `rc-journey-wp` / `foundry-vtt` targets with inventory-driven scrape targets
+- [x] Generic host dashboard (Grafana) — node health for any node
+- [x] Generic node-health alert rules — `InstanceDown`, `HighCPU`, `HighMemory`, `DiskFull`
+- [x] Generic Promtail config — journald + syslog by default; app overlays opt-in
+- [x] Move WordPress / Foundry specifics to `examples/wordpress-foundry/`
+- [x] Org-specific grep returns zero hits outside `examples/`
 
 ## v0.4.0 — Docs & examples
 
