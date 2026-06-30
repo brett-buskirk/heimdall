@@ -1,55 +1,63 @@
-# rcj-infra — Terraform + Ansible Observability Stack
+# Heimdall
 
-> **Status:** This was a real production deployment, now decommissioned. The infrastructure is torn down, but the codebase is maintained here as a reference implementation. Everything in it ran in production.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A complete Infrastructure-as-Code project that provisions a DigitalOcean VPC and deploys a full observability stack — metrics, logs, and alerting — across multiple nodes. Built to be reproducible, nomad-friendly, and zero-trust by default.
+**Drop-in observability stack for DigitalOcean — Prometheus, Grafana, Loki, and Alertmanager on a Tailscale-secured VPC, provisioned with Terraform + Ansible.**
 
-## What This Deploys
+One `terraform apply` and one `ansible-playbook` run gives any team a complete metrics, logs, and alerting hub — with zero management ports exposed to the public internet.
+
+> Not an engineer? Read the [plain-language overview](docs/ABOUT.md) — what Heimdall is and why it exists, no jargon.
+
+---
+
+## What it deploys
 
 **Infrastructure (Terraform):**
 - DigitalOcean VPC with private networking
-- Management droplet (the monitoring hub)
-- Firewall rules following a Tailscale-first security model — no management ports exposed to the public internet
+- Management droplet — the monitoring hub
+- Cloud Firewall with a Tailscale-first security model (no public management ports)
 - DigitalOcean Spaces bucket for long-term log archival
 
-**Observability Stack (Ansible + Docker Compose):**
+**Observability stack (Ansible + Docker Compose):**
 
 | Component | Role | Port |
-|-----------|------|------|
-| Prometheus | Metrics collection & alerting rules | 9090 |
-| Grafana | Dashboards & visualization | 3000 |
+|---|---|---|
+| Prometheus | Metrics collection, evaluation, and alerting rules | 9090 |
+| Grafana | Dashboards and visualization | 3000 |
 | Loki | Log aggregation | 3100 |
-| Promtail | Log shipping from all nodes | 9080 |
-| Alertmanager | Alert routing (email / Slack) | 9093 |
-| Node Exporter | Host-level metrics on every node | 9100 |
+| Alertmanager | Alert routing — email, Slack, Discord | 9093 |
+| Node Exporter | Host-level metrics on every monitored node | 9100 |
+| Promtail | Log shipping from every monitored node | 9080 |
 
-**Access model:** Grafana, Prometheus, and Alertmanager are bound to private interfaces only. Access is via [Tailscale](https://tailscale.com/) — authenticated mesh VPN, no ports punched through the firewall.
+**Access model:** Grafana, Prometheus, and Alertmanager are bound to private interfaces only. All access is via [Tailscale](https://tailscale.com/) — authenticated mesh VPN, no public ports.
+
+---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Your VPC                             │
-│                                                             │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
-│  │  App Node 1  │    │  App Node 2  │    │  App Node N  │   │
-│  │              │    │              │    │              │   │
-│  │ node_exporter│    │ node_exporter│    │ node_exporter│   │
-│  │   promtail   │    │   promtail   │    │   promtail   │   │
-│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘   │
-│         │                   │                   │           │
-│         └───────────────────┼───────────────────┘           │
-│                      VPC private network                    │
-│                             │                               │
-│                             ▼                               │
-│                   ┌──────────────────┐                      │
-│                   │  Management Node │                      │
-│                   │  ─────────────── │                      │
-│                   │  • Prometheus    │◄──── Tailscale ────► You
-│                   │  • Grafana       │     (zero-trust)     │
-│                   │  • Loki          │                      │
-│                   │  • Alertmanager  │                      │
-│                   └────────┬─────────┘                      │
+┌──────────────────────────────────────────────────────────────┐
+│                         Your VPC                             │
+│                                                              │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐      │
+│  │  App Node 1 │    │  App Node 2 │    │  App Node N │      │
+│  │             │    │             │    │             │      │
+│  │node_exporter│    │node_exporter│    │node_exporter│      │
+│  │  promtail   │    │  promtail   │    │  promtail   │      │
+│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘      │
+│         │                  │                  │             │
+│         └──────────────────┼──────────────────┘             │
+│                     VPC private network                      │
+│                            │                                │
+│                            ▼                                │
+│                  ┌───────────────────┐                      │
+│                  │  Management Node  │                      │
+│                  │  ─────────────── ◄──── Tailscale ──── You│
+│                  │  • Prometheus     │     (zero-trust)     │
+│                  │  • Grafana        │                      │
+│                  │  • Loki           │                      │
+│                  │  • Alertmanager   │                      │
+│                  └─────────┬─────────┘                      │
 │                            │                                │
 └────────────────────────────┼────────────────────────────────┘
                              │
@@ -61,173 +69,151 @@ A complete Infrastructure-as-Code project that provisions a DigitalOcean VPC and
                    └──────────────────┘
 ```
 
-## Project Structure
+See [ARCHITECTURE.md](ARCHITECTURE.md) for a full component map, data-flow walkthrough, and the reasoning behind the design.
+
+---
+
+## Project structure
 
 ```
-rcj-infra/
+heimdall/
 ├── terraform/
-│   ├── environments/production/   # Root module — VPC, firewall, compute
+│   ├── environments/example/      # Root module — clone this to deploy
 │   └── modules/
-│       ├── droplet/               # Reusable droplet module
-│       ├── firewall/              # Firewall rules
+│       ├── droplet/               # Reusable droplet definition
+│       ├── firewall/              # Cloud Firewall rules
 │       └── spaces-bucket/         # Object storage for log archival
 ├── ansible/
 │   ├── playbooks/
 │   │   ├── management-node.yml    # Full management node setup
 │   │   └── deploy-agents.yml      # Node Exporter + Promtail on app nodes
 │   ├── roles/
-│   │   ├── common/                # Base packages, timezone, users
+│   │   ├── common/                # Base packages, timezone, system config
 │   │   ├── security/              # UFW, fail2ban, SSH hardening
-│   │   ├── docker/                # Docker Engine + Compose
+│   │   ├── docker/                # Docker Engine + Compose plugin
 │   │   ├── monitoring-stack/      # Full observability stack
 │   │   ├── node-exporter/         # Metrics agent
 │   │   └── promtail-agent/        # Log shipping agent
-│   ├── group_vars/all.yml         # Global variables
-│   └── inventory/                 # Inventory (generated, gitignored)
-├── docker/monitoring/             # Docker Compose stack + all configs
+│   ├── group_vars/all.yml         # Deployment variables
+│   └── inventory/                 # Inventory files (generated, gitignored)
+├── docker/monitoring/             # Static configs (mirrors Ansible output)
 │   ├── docker-compose.yml
-│   ├── prometheus/                # Scrape config + alert rules
-│   ├── grafana/                   # Dashboard provisioning
-│   ├── loki/                      # Log retention config
-│   ├── alertmanager/              # Alert routing config
-│   └── .env.example               # Environment variable template
+│   ├── prometheus/
+│   ├── grafana/
+│   ├── loki/
+│   ├── alertmanager/
+│   └── .env.example
+├── examples/
+│   └── wordpress-foundry/         # App-specific overlay example
+├── docs/
+│   ├── ABOUT.md                   # Plain-language overview
+│   └── ARCHITECTURE.md            # → symlink or see ARCHITECTURE.md at root
 └── scripts/
-    ├── deploy.sh                  # Sync configs + restart stack
+    ├── deploy.sh                  # Manual sync + restart (non-Ansible path)
     └── setup-tailscale.sh         # Tailscale install helper
 ```
 
+---
+
 ## Prerequisites
 
-- DigitalOcean account + API token
-- Spaces access keys (for log archival)
-- SSH key registered in DigitalOcean
-- Tailscale account (free tier is fine)
+- DigitalOcean account with an API token and Spaces access keys
+- An existing DigitalOcean VPC (Heimdall deploys a management node into it)
+- SSH key registered with DigitalOcean (`doctl compute ssh-key list`)
+- Tailscale account (free tier is sufficient)
 - Local tools: `terraform >= 1.0`, `ansible >= 2.12`, `doctl`
 
-## Quick Start
+---
 
-### 1. Clone and configure
+## Quick start
 
-```bash
-git clone https://github.com/brett-buskirk/rcj-infra.git
-cd rcj-infra
-
-# Terraform variables
-cp terraform/environments/production/terraform.tfvars.example \
-   terraform/environments/production/terraform.tfvars
-# Edit terraform.tfvars: do_token, ssh_fingerprint, spaces keys, etc.
-
-# Monitoring stack environment
-cp docker/monitoring/.env.example docker/monitoring/.env
-# Edit .env: GRAFANA_ADMIN_PASSWORD (required), SMTP settings if using email alerts
-```
-
-### 2. Provision infrastructure
+The detailed, step-by-step deployment guide — with a worked example — is in **[CUSTOMIZATION.md](CUSTOMIZATION.md)**. The five-step summary:
 
 ```bash
-cd terraform/environments/production
-terraform init
-terraform plan
-terraform apply
-```
+# 1. Clone and configure Terraform variables
+git clone https://github.com/brett-buskirk/heimdall.git
+cd heimdall
+cp terraform/environments/example/terraform.tfvars.example \
+   terraform/environments/example/terraform.tfvars
+# Edit terraform.tfvars: do_token, project_name, vpc_name, ssh_fingerprint, ssh_allowed_ips
 
-Note the `management_node_ip` from the output — you'll need it for the next step.
+# 2. Provision infrastructure
+cd terraform/environments/example
+terraform init && terraform apply
 
-### 3. Deploy the stack
+# 3. Configure Ansible
+# Edit ansible/group_vars/all.yml: project_name, vpc_cidr
+# Edit ansible/inventory/manual.yml: management node IP
 
-```bash
-# Install Ansible dependencies
-ansible-galaxy collection install community.docker
+# 4. Deploy the stack
+ansible-playbook -i ansible/inventory/manual.yml ansible/playbooks/management-node.yml
 
-# Update ansible/group_vars/all.yml with your management node VPC IP
-# Update ansible/inventory/production.yml with your node IPs
-
-# Deploy everything to the management node
-ansible-playbook -i ansible/inventory/production.yml \
-  ansible/playbooks/management-node.yml
-
-# Deploy agents to application nodes
-ansible-playbook -i ansible/inventory/production.yml \
-  ansible/playbooks/deploy-agents.yml
-```
-
-### 4. Set up Tailscale access
-
-```bash
-# Copy the script to your management node and run it
+# 5. Install Tailscale on the management node and connect
 scp scripts/setup-tailscale.sh root@<management_ip>:/tmp/
 ssh root@<management_ip> 'bash /tmp/setup-tailscale.sh && sudo tailscale up'
-
-# After authenticating, access the stack via Tailscale hostname:
-#   http://<tailscale-hostname>:3000   → Grafana
-#   http://<tailscale-hostname>:9090   → Prometheus
-#   http://<tailscale-hostname>:9093   → Alertmanager
 ```
 
-### 5. Add application nodes
+After Tailscale is up, reach the stack at `http://<tailscale-hostname>:3000` (Grafana).
 
-Edit `docker/monitoring/prometheus/prometheus.yml` to add your node VPC IPs under `node-exporter-apps`, then restart Prometheus:
+---
 
-```bash
-cd /opt/monitoring && docker compose restart prometheus
-```
+## Security model
 
-## Alerting
+All management ports (Grafana on 3000, Prometheus on 9090, Alertmanager on 9093) are bound to private interfaces and blocked at the Cloud Firewall. The only access path is Tailscale — authenticated, encrypted, and auditable. There are no public-facing management endpoints.
 
-Pre-configured alert rules cover:
-- **Instance down** — any monitored host unreachable
-- **High CPU** (>85% for 5 min)
-- **High memory** (>90% for 5 min)
-- **Low disk** (<20% remaining)
+SSH is restricted to the IPs in `ssh_allowed_ips` (required, no default — see [CUSTOMIZATION.md](CUSTOMIZATION.md#security)). Node Exporter and Promtail on application nodes only accept connections from the management node's VPC private IP; they never talk cross-node or to the public internet.
 
-Configure alert delivery in `.env`:
+See [SECURITY.md](SECURITY.md) for the supported-version policy and how to report vulnerabilities privately.
 
-```bash
-SMTP_ENABLED=true
-SMTP_HOST=smtp.mailgun.org:587
-SMTP_USER=your_user
-SMTP_PASSWORD=your_password
-SMTP_FROM=alerts@yourdomain.com
-```
-
-Slack and Discord webhook receivers are included in `alertmanager.yml` as commented examples.
-
-## Security Model
-
-Firewall rules block all inbound traffic on management ports (3000, 9090, 9093) from the public internet. The only access path is Tailscale — authenticated, encrypted, and auditable. SSH is restricted to specific IPs in `terraform.tfvars` (`ssh_allowed_ips`).
-
-Node Exporter and Promtail on application nodes only accept connections from the management node's VPC IP — no cross-node exposure.
+---
 
 ## Teardown
 
 ```bash
-cd terraform/environments/production
+cd terraform/environments/example
 
-# Destroy compute only (preserve log bucket)
+# Destroy compute but preserve log bucket and its data
 terraform destroy \
   -target=module.management_node \
   -target=module.management_firewall
 
-# Full destroy
+# Full teardown (including Spaces bucket)
 terraform destroy
 ```
+
+---
 
 ## Maintenance
 
 ```bash
 # Update stack images on the management node
-cd /opt/monitoring
+ssh root@<management_node_ip>
+cd /opt/<project_name>-monitoring
 docker compose pull && docker compose up -d
 
-# View logs
+# Tail logs for a specific service
 docker compose logs -f grafana
 
 # Add a new monitored node
-# 1. Add to ansible/inventory/production.yml
-# 2. ansible-playbook -i inventory/production.yml playbooks/deploy-agents.yml --limit new-node
-# 3. Add the VPC IP to prometheus/prometheus.yml and restart Prometheus
+# 1. Add it to ansible/inventory/production.yml
+# 2. ansible-playbook -i inventory/production.yml playbooks/deploy-agents.yml --limit <new-node>
+# Prometheus auto-discovers it from the Ansible inventory on the next playbook run
 ```
 
 ---
 
-Built by [Brett Buskirk](https://brett-buskirk.dev) · [brett-buskirk.dev](https://brett-buskirk.dev)
+## Documentation
+
+| Document | Purpose |
+|---|---|
+| [CUSTOMIZATION.md](CUSTOMIZATION.md) | Step-by-step deployment guide with worked example |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Component map, data-flow, design decisions |
+| [docs/ABOUT.md](docs/ABOUT.md) | Plain-language overview — no jargon |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute, validation gates, conventions |
+| [SECURITY.md](SECURITY.md) | Vulnerability reporting and security posture |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
+| [ROADMAP.md](ROADMAP.md) | Planned phases and post-1.0 ideas |
+
+---
+
+Built by [Brett Buskirk LLC](https://brett-buskirk.dev) · MIT License

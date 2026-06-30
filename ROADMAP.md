@@ -32,13 +32,13 @@
 - [x] Move WordPress / Foundry specifics to `examples/wordpress-foundry/`
 - [x] Org-specific grep returns zero hits outside `examples/`
 
-## v0.4.0 — Docs & examples
+## v0.4.0 — Docs & examples ✅
 
-- [ ] Rewrite `README.md` — generic pitch, architecture diagram, quickstart, security model
-- [ ] `ARCHITECTURE.md` — component map, data-flow, Tailscale zero-trust model, variable model
-- [ ] `CUSTOMIZATION.md` — step-by-step "deploy for your org in 15 minutes" with worked example
-- [ ] `docs/ABOUT.md` — plain-language overview (no jargon)
-- [ ] All variables documented with descriptions
+- [x] Rewrite `README.md` — generic pitch, architecture diagram, quickstart, security model
+- [x] `ARCHITECTURE.md` — component map, data-flow, Tailscale zero-trust model, variable model
+- [x] `CUSTOMIZATION.md` — step-by-step "deploy for your org in 15 minutes" with worked example
+- [x] `docs/ABOUT.md` — plain-language overview (no jargon)
+- [x] All variables documented with descriptions
 
 ## v0.5.0 — CI & validation
 
