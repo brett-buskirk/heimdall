@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Overview dashboard for all nodes in rcj-vpc-nyc3",
+  "description": "Overview dashboard for all monitored VPC nodes",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -15,7 +15,7 @@
       "id": 1,
       "options": {
         "code": { "language": "plaintext", "showLineNumbers": false },
-        "content": "# 🏔️ RCJ Infrastructure Overview\nReal-time monitoring of all nodes in the rcj-vpc-nyc3 VPC.",
+        "content": "# Infrastructure Overview\nReal-time monitoring of all nodes in this VPC.",
         "mode": "markdown"
       },
       "pluginVersion": "10.4.1",
@@ -48,10 +48,9 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
-          "mappings": [
-            { "options": { "0": { "color": "red", "index": 0, "text": "DOWN" }, "1": { "color": "green", "index": 1, "text": "UP" } }, "type": "value" }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
         },
         "overrides": []
       },
@@ -59,8 +58,8 @@
       "id": 3,
       "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
       "pluginVersion": "10.4.1",
-      "targets": [{ "expr": "up{instance=\"rc-journey-wp\"}", "legendFormat": "WordPress", "refId": "A" }],
-      "title": "WordPress (rc-journey-wp)",
+      "targets": [{ "expr": "sum(up{job=\"node-exporter-apps\"}) or vector(0)", "legendFormat": "Healthy", "refId": "A" }],
+      "title": "App Servers Up",
       "type": "stat"
     },
     {
@@ -68,10 +67,9 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
-          "mappings": [
-            { "options": { "0": { "color": "red", "index": 0, "text": "DOWN" }, "1": { "color": "green", "index": 1, "text": "UP" } }, "type": "value" }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] },
+          "unit": "short"
         },
         "overrides": []
       },
@@ -79,8 +77,8 @@
       "id": 4,
       "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
       "pluginVersion": "10.4.1",
-      "targets": [{ "expr": "up{instance=\"foundry-vtt\"}", "legendFormat": "Foundry VTT", "refId": "A" }],
-      "title": "🎲 Foundry VTT",
+      "targets": [{ "expr": "count(up{job=\"node-exporter-apps\"} == 0) or vector(0)", "legendFormat": "Down", "refId": "A" }],
+      "title": "App Servers Down",
       "type": "stat"
     },
     {
@@ -193,13 +191,13 @@
   ],
   "refresh": "30s",
   "schemaVersion": 39,
-  "tags": ["rcj-infra", "overview"],
+  "tags": ["heimdall", "overview"],
   "templating": { "list": [] },
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "RCJ Infrastructure Overview",
-  "uid": "rcj-overview",
+  "title": "Infrastructure Overview",
+  "uid": "host-overview",
   "version": 1,
   "weekStart": ""
 }

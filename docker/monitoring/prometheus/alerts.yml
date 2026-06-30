@@ -1,7 +1,8 @@
 # =============================================================================
 # Prometheus Alerting Rules
 # =============================================================================
-# Critical alerts for rcj-vpc-nyc3 infrastructure
+# Generic node-health and monitoring-stack alerts.
+# For app-specific alerts (e.g. WordPress, Foundry VTT) see examples/.
 # =============================================================================
 
 groups:
@@ -69,33 +70,6 @@ groups:
         annotations:
           summary: "Critical disk space on {{ $labels.instance }}"
           description: "Disk {{ $labels.mountpoint }} has less than 10% free space (current: {{ $value | printf \"%.1f\" }}%)"
-
-  # ---------------------------------------------------------------------------
-  # Service-Specific Alerts
-  # ---------------------------------------------------------------------------
-  - name: services
-    rules:
-      # Foundry VTT server down
-      - alert: FoundryVTTDown
-        expr: up{instance="foundry-vtt"} == 0
-        for: 1m
-        labels:
-          severity: critical
-          service: foundry
-        annotations:
-          summary: "🎲 Foundry VTT server is DOWN!"
-          description: "The Foundry VTT server has been unreachable for more than 1 minute. Your players can't connect!"
-
-      # WordPress server down
-      - alert: WordPressDown
-        expr: up{instance="rc-journey-wp"} == 0
-        for: 2m
-        labels:
-          severity: critical
-          service: wordpress
-        annotations:
-          summary: "📝 WordPress server is DOWN!"
-          description: "The RC Journey WordPress site has been unreachable for more than 2 minutes."
 
   # ---------------------------------------------------------------------------
   # Monitoring Stack Health

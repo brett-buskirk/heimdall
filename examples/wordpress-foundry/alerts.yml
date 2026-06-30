@@ -1,0 +1,34 @@
+# =============================================================================
+# Prometheus Alert Rules — WordPress + Foundry VTT Overlay
+# =============================================================================
+# App-specific alerts for a WordPress + Foundry VTT deployment.
+# Merge with your main prometheus/alerts.yml, or add as a separate rule file
+# listed under rule_files: in prometheus.yml.
+#
+# Update instance label values to match your Prometheus scrape targets.
+# =============================================================================
+
+groups:
+  - name: wordpress_foundry
+    rules:
+      # Foundry VTT server unreachable
+      - alert: FoundryVTTDown
+        expr: up{instance="foundry-vtt"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: foundry
+        annotations:
+          summary: "Foundry VTT server is DOWN"
+          description: "The Foundry VTT server ({{ $labels.instance }}) has been unreachable for more than 1 minute."
+
+      # WordPress server unreachable
+      - alert: WordPressDown
+        expr: up{instance="wordpress"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: wordpress
+        annotations:
+          summary: "WordPress server is DOWN"
+          description: "The WordPress server ({{ $labels.instance }}) has been unreachable for more than 2 minutes."

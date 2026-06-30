@@ -1,7 +1,7 @@
 # =============================================================================
 # Loki Configuration
 # =============================================================================
-# Log aggregation for rcj-vpc-nyc3 infrastructure
+# Log aggregation — 14 day local retention, optional Spaces archival.
 #
 # Retention: 14 days locally, then archive to Spaces (configured separately)
 # =============================================================================
@@ -68,7 +68,7 @@ compactor:
 #
 # storage_config:
 #   aws:
-#     s3: s3://access_key:secret_key@nyc3.digitaloceanspaces.com/rcj-logs-nyc3
+#     s3: s3://access_key:secret_key@<region>.digitaloceanspaces.com/<project_name>-logs-<region>
 #     s3forcepathstyle: true
 #   tsdb_shipper:
 #     active_index_directory: /loki/tsdb-index

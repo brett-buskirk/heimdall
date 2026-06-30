@@ -43,12 +43,6 @@ route:
       group_wait: 10s
       repeat_interval: 1h
     
-    # Foundry-specific alerts get special treatment
-    - match:
-        service: foundry
-      receiver: 'email-critical'
-      group_wait: 10s
-      repeat_interval: 30m
 
 # =============================================================================
 # Receivers
@@ -60,7 +54,7 @@ receivers:
       - to: 'alerts@yourdomain.com'
         send_resolved: true
         headers:
-          Subject: '[RCJ-Infra] {{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
+          Subject: '[YOUR-PROJECT] {{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
         html: |
           {{ range .Alerts }}
           <h3>{{ .Labels.alertname }}</h3>

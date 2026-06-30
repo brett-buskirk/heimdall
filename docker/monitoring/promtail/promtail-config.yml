@@ -24,7 +24,7 @@ scrape_configs:
           - localhost
         labels:
           job: varlogs
-          host: rcj-management
+          host: management-node
           __path__: /var/log/*.log
 
   # ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@ scrape_configs:
           - localhost
         labels:
           job: syslog
-          host: rcj-management
+          host: management-node
           __path__: /var/log/syslog
 
   - job_name: auth
@@ -45,7 +45,7 @@ scrape_configs:
           - localhost
         labels:
           job: auth
-          host: rcj-management
+          host: management-node
           __path__: /var/log/auth.log
 
   # ---------------------------------------------------------------------------
@@ -57,7 +57,7 @@ scrape_configs:
           - localhost
         labels:
           job: docker
-          host: rcj-management
+          host: management-node
           __path__: /var/lib/docker/containers/*/*-json.log
     pipeline_stages:
       - json:

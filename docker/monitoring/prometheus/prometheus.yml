@@ -1,7 +1,8 @@
 # =============================================================================
 # Prometheus Configuration
 # =============================================================================
-# Scrapes metrics from all nodes in the rcj-vpc-nyc3 VPC
+# Scrapes metrics from all nodes in the VPC.
+# Update instance labels and app-server targets to match your deployment.
 # =============================================================================
 
 global:
@@ -9,7 +10,7 @@ global:
   evaluation_interval: 15s
   external_labels:
     environment: production
-    vpc: rcj-vpc-nyc3
+    project: your-project-name
 
 # =============================================================================
 # Alerting Configuration
@@ -37,7 +38,7 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
         labels:
-          instance: 'rcj-management'
+          instance: 'management-node'
 
   # ---------------------------------------------------------------------------
   # Management Node - Node Exporter
@@ -46,7 +47,7 @@ scrape_configs:
     static_configs:
       - targets: ['node-exporter:9100']
         labels:
-          instance: 'rcj-management'
+          instance: 'management-node'
           role: 'management'
 
   # ---------------------------------------------------------------------------
@@ -76,7 +77,7 @@ scrape_configs:
     static_configs:
       - targets: ['loki:3100']
         labels:
-          instance: 'rcj-management'
+          instance: 'management-node'
 
   # ---------------------------------------------------------------------------
   # Grafana Metrics
@@ -85,7 +86,7 @@ scrape_configs:
     static_configs:
       - targets: ['grafana:3000']
         labels:
-          instance: 'rcj-management'
+          instance: 'management-node'
 
   # ---------------------------------------------------------------------------
   # Alertmanager Metrics
@@ -94,7 +95,7 @@ scrape_configs:
     static_configs:
       - targets: ['alertmanager:9093']
         labels:
-          instance: 'rcj-management'
+          instance: 'management-node'
 
   # ---------------------------------------------------------------------------
   # Docker Container Metrics (Optional - via cAdvisor)

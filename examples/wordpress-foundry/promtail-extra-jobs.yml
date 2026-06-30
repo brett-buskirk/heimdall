@@ -1,0 +1,67 @@
+# =============================================================================
+# Promtail Extra Jobs — WordPress + Foundry VTT Overlay
+# =============================================================================
+# Add these jobs to your Promtail config on nodes that run WordPress or
+# Foundry VTT. In the Ansible template (promtail-config.yml.j2) you can
+# include these conditionally based on a host variable, e.g.:
+#
+#   # In your inventory or host_vars:
+#   promtail_extra_jobs:
+#     - wordpress   # on WP nodes
+#     - foundry     # on Foundry nodes
+#
+# Then in promtail-config.yml.j2:
+#   {% if 'wordpress' in (promtail_extra_jobs | default([])) %}
+#   {{ lookup('file', 'examples/wordpress-foundry/promtail-extra-jobs.yml') }}
+#   {% endif %}
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# WordPress / Apache logs
+# ---------------------------------------------------------------------------
+# Uncomment and add to scrape_configs on nodes running WordPress + Apache
+
+# - job_name: apache
+#   static_configs:
+#     - targets:
+#         - localhost
+#       labels:
+#         job: apache
+#         host: "{{ inventory_hostname }}"
+#         __path__: /var/log/apache2/*.log
+#
+# - job_name: wordpress
+#   static_configs:
+#     - targets:
+#         - localhost
+#       labels:
+#         job: wordpress
+#         host: "{{ inventory_hostname }}"
+#         __path__: /var/www/*/wp-content/debug.log
+
+# ---------------------------------------------------------------------------
+# Foundry VTT logs (Docker container)
+# ---------------------------------------------------------------------------
+# Uncomment and add to scrape_configs on nodes running Foundry VTT via Docker
+
+# - job_name: docker
+#   static_configs:
+#     - targets:
+#         - localhost
+#       labels:
+#         job: docker
+#         host: "{{ inventory_hostname }}"
+#         __path__: /var/lib/docker/containers/*/*-json.log
+#   pipeline_stages:
+#     - json:
+#         expressions:
+#           log: log
+#           stream: stream
+#           time: time
+#     - labels:
+#         stream:
+#     - timestamp:
+#         source: time
+#         format: RFC3339Nano
+#     - output:
+#         source: log
