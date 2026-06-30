@@ -1,5 +1,5 @@
 # =============================================================================
-# Variables - Production Environment
+# Variables - Example Environment
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -25,23 +25,36 @@ variable "spaces_secret_key" {
 }
 
 # -----------------------------------------------------------------------------
+# Project
+# -----------------------------------------------------------------------------
+
+variable "project_name" {
+  description = "Short identifier for this deployment (e.g. 'acme', 'myco'). Prefixes all resource names and tags. Use lowercase letters, numbers, and hyphens only."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9][a-z0-9-]{0,30}[a-z0-9]$", var.project_name))
+    error_message = "project_name must be 2-32 characters, lowercase alphanumeric and hyphens, not starting or ending with a hyphen."
+  }
+}
+
+# -----------------------------------------------------------------------------
 # Infrastructure Configuration
 # -----------------------------------------------------------------------------
 
 variable "region" {
-  description = "DigitalOcean region"
+  description = "DigitalOcean region slug (e.g. 'nyc3', 'ams3', 'sfo3')"
   type        = string
   default     = "nyc3"
 }
 
 variable "vpc_name" {
-  description = "Name of the existing VPC to deploy into"
+  description = "Name of the existing VPC to deploy the management node into"
   type        = string
-  default     = "rcj-vpc-nyc3"
 }
 
 variable "ssh_fingerprint" {
-  description = "SSH key fingerprint registered with DigitalOcean"
+  description = "SSH key fingerprint registered with DigitalOcean (from: doctl compute ssh-key list)"
   type        = string
 }
 
@@ -50,15 +63,15 @@ variable "ssh_fingerprint" {
 # -----------------------------------------------------------------------------
 
 variable "management_node_size" {
-  description = "Droplet size for the management node"
+  description = "Droplet size for the management node. s-2vcpu-4gb (~$24/mo) is the recommended minimum for the full monitoring stack."
   type        = string
-  default     = "s-2vcpu-4gb"  # ~$24/mo - good for monitoring stack
+  default     = "s-2vcpu-4gb"
 }
 
 variable "log_bucket_name" {
-  description = "Name for the log retention Spaces bucket"
+  description = "Name of the Spaces bucket for log retention. Leave empty to auto-derive as '<project_name>-logs-<region>'."
   type        = string
-  default     = "rcj-logs-nyc3"
+  default     = ""
 }
 
 # -----------------------------------------------------------------------------
@@ -66,15 +79,23 @@ variable "log_bucket_name" {
 # -----------------------------------------------------------------------------
 
 variable "ssh_allowed_ips" {
-  description = "List of IP addresses/CIDRs allowed to SSH (use 0.0.0.0/0 for any)"
+  description = <<-EOT
+    List of IP addresses/CIDRs allowed to SSH to the management node.
+    Restrict this to known IPs - do not use ["0.0.0.0/0", "::/0"] in production.
+    Example: ["203.0.113.10/32", "198.51.100.0/24"]
+  EOT
   type        = list(string)
-  default     = ["0.0.0.0/0", "::/0"]  # Consider restricting in production
+
+  validation {
+    condition     = length(var.ssh_allowed_ips) > 0
+    error_message = "ssh_allowed_ips must contain at least one entry. Set it to your known IPs."
+  }
 }
 
 variable "enable_public_grafana" {
-  description = "Enable public HTTP/HTTPS access to Grafana (set false if using Tailscale)"
+  description = "Expose Grafana publicly over HTTP/HTTPS. Leave false when using Tailscale (recommended)."
   type        = bool
-  default     = false  # Secure by default - use Tailscale
+  default     = false
 }
 
 # -----------------------------------------------------------------------------
@@ -82,7 +103,7 @@ variable "enable_public_grafana" {
 # -----------------------------------------------------------------------------
 
 variable "grafana_domain" {
-  description = "Domain name for Grafana (e.g., grafana.yourdomain.com)"
+  description = "Domain name for Grafana (e.g. 'grafana.yourdomain.com'). Only used when enable_public_grafana = true."
   type        = string
   default     = ""
 }

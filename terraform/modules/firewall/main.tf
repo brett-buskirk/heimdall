@@ -5,6 +5,15 @@
 # rules. Designed to be secure by default with explicit allow rules.
 # =============================================================================
 
+terraform {
+  required_providers {
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.0"
+    }
+  }
+}
+
 resource "digitalocean_firewall" "this" {
   name        = var.name
   droplet_ids = var.droplet_ids

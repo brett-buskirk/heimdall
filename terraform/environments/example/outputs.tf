@@ -1,5 +1,5 @@
 # =============================================================================
-# Outputs - Production Environment
+# Outputs - Example Environment
 # =============================================================================
 
 output "management_node_ip" {
@@ -10,6 +10,11 @@ output "management_node_ip" {
 output "management_node_private_ip" {
   description = "Private (VPC) IP address of the management node"
   value       = module.management_node.ipv4_address_private
+}
+
+output "management_node_name" {
+  description = "Name of the management node droplet"
+  value       = module.management_node.name
 }
 
 output "log_bucket_name" {
@@ -28,14 +33,14 @@ output "ssh_command" {
 }
 
 output "vpc_ip_range" {
-  description = "IP range of the VPC (for reference)"
-  value       = data.digitalocean_vpc.rcj_vpc.ip_range
+  description = "IP range of the VPC"
+  value       = data.digitalocean_vpc.main.ip_range
 }
 
-output "vpc_droplets" {
-  description = "List of droplets in the VPC (for agent deployment)"
+output "vpc_nodes" {
+  description = "Droplets found in the VPC — useful for configuring monitored_nodes in Ansible"
   value = [
-    for d in data.digitalocean_droplets.vpc_droplets.droplets : {
+    for d in data.digitalocean_droplets.vpc_nodes.droplets : {
       name       = d.name
       private_ip = d.ipv4_address_private
       public_ip  = d.ipv4_address
@@ -43,12 +48,11 @@ output "vpc_droplets" {
   ]
 }
 
-# Grafana URL (depends on access method)
 output "grafana_url" {
   description = "URL to access Grafana"
   value = var.enable_public_grafana && var.grafana_domain != "" ? (
     "https://${var.grafana_domain}"
-  ) : (
-    "http://${module.management_node.ipv4_address}:3000 (via Tailscale or SSH tunnel)"
+    ) : (
+    "Access via Tailscale: http://${module.management_node.ipv4_address}:3000"
   )
 }

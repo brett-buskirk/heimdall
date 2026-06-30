@@ -1,17 +1,19 @@
 # =============================================================================
-# RCJ Infrastructure - Production Environment
+# Heimdall - Example Environment
 # =============================================================================
-# Management node and observability infrastructure for rcj-vpc-nyc3
-# 
+# Management node and observability infrastructure for a DigitalOcean VPC.
+#
 # This configuration creates:
 #   - Management droplet (Prometheus, Grafana, Loki, Alertmanager)
 #   - Log retention Spaces bucket
 #   - Cloud firewall with secure defaults
 #
 # Prerequisites:
-#   - Existing VPC (rcj-vpc-nyc3)
+#   - Existing VPC (set vpc_name in terraform.tfvars)
 #   - SSH key added to DigitalOcean account
 #   - Spaces access keys generated
+#
+# See CUSTOMIZATION.md for a step-by-step deployment guide.
 # =============================================================================
 
 terraform {
@@ -24,12 +26,14 @@ terraform {
     }
   }
 
-  # Optional: Remote state backend (recommended for team/production use)
+  # Remote state backend (recommended for team/production use).
+  # Uncomment and fill in your values before running terraform apply.
+  # See CUSTOMIZATION.md for the full remote state setup guide.
   # backend "s3" {
-  #   endpoint                    = "nyc3.digitaloceanspaces.com"
-  #   key                         = "terraform/rcj-infra/terraform.tfstate"
-  #   bucket                      = "rcj-terraform-state"
-  #   region                      = "us-east-1"  # Required but ignored by DO
+  #   endpoint                    = "<region>.digitaloceanspaces.com"
+  #   key                         = "terraform/<project_name>/terraform.tfstate"
+  #   bucket                      = "<project_name>-terraform-state"
+  #   region                      = "us-east-1"  # Required by provider; ignored by DO Spaces
   #   skip_credentials_validation = true
   #   skip_metadata_api_check     = true
   #   skip_region_validation      = true
@@ -43,19 +47,26 @@ provider "digitalocean" {
 }
 
 # =============================================================================
+# Locals
+# =============================================================================
+
+locals {
+  management_name = "${var.project_name}-management"
+  log_bucket_name = var.log_bucket_name != "" ? var.log_bucket_name : "${var.project_name}-logs-${var.region}"
+}
+
+# =============================================================================
 # Data Sources
 # =============================================================================
 
-# Look up existing VPC by name
-data "digitalocean_vpc" "rcj_vpc" {
+data "digitalocean_vpc" "main" {
   name = var.vpc_name
 }
 
-# Look up existing droplets for firewall rules (metrics scraping)
-data "digitalocean_droplets" "vpc_droplets" {
+data "digitalocean_droplets" "vpc_nodes" {
   filter {
     key    = "vpc_uuid"
-    values = [data.digitalocean_vpc.rcj_vpc.id]
+    values = [data.digitalocean_vpc.main.id]
   }
 }
 
@@ -66,13 +77,13 @@ data "digitalocean_droplets" "vpc_droplets" {
 module "management_node" {
   source = "../../modules/droplet"
 
-  name             = "rcj-management"
+  name             = local.management_name
   region           = var.region
   size             = var.management_node_size
   image            = "ubuntu-24-04-x64"
-  vpc_uuid         = data.digitalocean_vpc.rcj_vpc.id
+  vpc_uuid         = data.digitalocean_vpc.main.id
   ssh_fingerprints = [var.ssh_fingerprint]
-  tags             = ["management", "monitoring", "rcj-infra"]
+  tags             = ["management", "monitoring", var.project_name]
 }
 
 # =============================================================================
@@ -82,34 +93,33 @@ module "management_node" {
 module "log_retention_bucket" {
   source = "../../modules/spaces-bucket"
 
-  name          = var.log_bucket_name
+  name          = local.log_bucket_name
   region        = var.region
   acl           = "private"
-  force_destroy = false  # Protect log data from accidental deletion
+  force_destroy = false
 }
 
 # =============================================================================
 # Firewall - Management Node
 # =============================================================================
-# 
-# Default configuration: Tailscale-only access (most secure)
-# - SSH (22) open for initial setup and emergency access
-# - All other access via Tailscale mesh network
 #
-# If var.enable_public_grafana = true:
-# - HTTP (80) open for Let's Encrypt certificate renewal
-# - HTTPS (443) open for Grafana web UI
+# Default: Tailscale-only access (most secure)
+#   - SSH (22) restricted to ssh_allowed_ips for initial setup and emergencies
+#   - All management ports (Grafana, Prometheus, Loki) accessible only over Tailscale
+#
+# When enable_public_grafana = true:
+#   - HTTP (80) opened for Let's Encrypt certificate renewal
+#   - HTTPS (443) opened for public Grafana access
 # =============================================================================
 
 module "management_firewall" {
   source = "../../modules/firewall"
 
-  name        = "rcj-management-firewall"
+  name        = "${var.project_name}-management-firewall"
   droplet_ids = [module.management_node.id]
   tags        = []
 
   inbound_rules = concat(
-    # Always allow SSH
     [
       {
         protocol         = "tcp"
@@ -117,25 +127,24 @@ module "management_firewall" {
         source_addresses = var.ssh_allowed_ips
       }
     ],
-    # VPC-internal traffic for metrics/logs (Prometheus scraping, Promtail shipping)
+    # VPC-internal traffic: Prometheus scraping (9090), Loki ingestion (3100), Alertmanager (9093)
     [
       {
         protocol         = "tcp"
-        port_range       = "9090"  # Prometheus
-        source_addresses = [data.digitalocean_vpc.rcj_vpc.ip_range]
+        port_range       = "9090"
+        source_addresses = [data.digitalocean_vpc.main.ip_range]
       },
       {
         protocol         = "tcp"
-        port_range       = "3100"  # Loki
-        source_addresses = [data.digitalocean_vpc.rcj_vpc.ip_range]
+        port_range       = "3100"
+        source_addresses = [data.digitalocean_vpc.main.ip_range]
       },
       {
         protocol         = "tcp"
-        port_range       = "9093"  # Alertmanager
-        source_addresses = [data.digitalocean_vpc.rcj_vpc.ip_range]
+        port_range       = "9093"
+        source_addresses = [data.digitalocean_vpc.main.ip_range]
       }
     ],
-    # Conditionally allow public HTTP/HTTPS for Grafana
     var.enable_public_grafana ? [
       {
         protocol         = "tcp"
@@ -152,15 +161,15 @@ module "management_firewall" {
 }
 
 # =============================================================================
-# Outputs for Ansible Integration
+# Ansible Inventory (auto-generated)
 # =============================================================================
 
-# Generate Ansible inventory file
 resource "local_file" "ansible_inventory" {
   content = templatefile("${path.module}/templates/inventory.yml.tpl", {
+    management_name       = local.management_name
     management_ip         = module.management_node.ipv4_address
     management_private_ip = module.management_node.ipv4_address_private
-    vpc_droplets          = data.digitalocean_droplets.vpc_droplets.droplets
+    vpc_nodes             = data.digitalocean_droplets.vpc_nodes.droplets
   })
   filename = "${path.module}/../../../ansible/inventory/production.yml"
 }
