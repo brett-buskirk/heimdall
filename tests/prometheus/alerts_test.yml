@@ -68,6 +68,7 @@ tests:
               instance: app-server-1
             exp_annotations:
               summary: "High memory usage on app-server-1"
+              description: "Memory usage is above 90% (current: 93.8%)"
 
   # The alert must NOT fire when memory usage is below 90%.
   # 8 GB total, 4 GB available → 50% usage.
@@ -109,3 +110,4 @@ tests:
               fstype: ext4
             exp_annotations:
               summary: "Low disk space on app-server-1"
+              description: "Disk / has less than 20% free space (current: 10.0%)"
