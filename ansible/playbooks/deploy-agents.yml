@@ -4,36 +4,37 @@
 # Deploys node_exporter and Promtail to application servers for metrics
 # and log collection.
 #
-# Usage:
+# Usage (all application servers):
 #   ansible-playbook -i inventory/production.yml playbooks/deploy-agents.yml
 #
-# Or for specific hosts:
-#   ansible-playbook -i inventory/production.yml playbooks/deploy-agents.yml --limit rc-journey-wp
+# Usage (single host):
+#   ansible-playbook -i inventory/production.yml playbooks/deploy-agents.yml \
+#     --limit my-app-server
 # =============================================================================
 ---
 - name: Deploy Monitoring Agents
   hosts: application_servers
   become: true
-  
+
   vars:
     loki_url: "http://{{ loki_server }}:3100/loki/api/v1/push"
-  
+
   roles:
     - node-exporter
     - promtail-agent
 
   post_tasks:
     - name: Display agent status
-      debug:
+      ansible.builtin.debug:
         msg: |
           ═══════════════════════════════════════════════════════════
-          🔍 Monitoring Agents Deployed on {{ inventory_hostname }}
+          Monitoring Agents Deployed — {{ inventory_hostname }}
           ═══════════════════════════════════════════════════════════
-          
+
           Node Exporter: http://{{ ansible_host }}:9100/metrics
           Promtail:      Shipping logs to {{ loki_url }}
-          
+
           Verify in Prometheus:
             up{instance="{{ inventory_hostname }}"}
-          
+
           ═══════════════════════════════════════════════════════════

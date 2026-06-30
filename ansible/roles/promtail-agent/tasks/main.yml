@@ -5,71 +5,71 @@
 # =============================================================================
 ---
 - name: Check if promtail is installed
-  stat:
+  ansible.builtin.stat:
     path: /usr/local/bin/promtail
   register: promtail_binary
 
 - name: Get latest promtail version
-  uri:
+  ansible.builtin.uri:
     url: https://api.github.com/repos/grafana/loki/releases/latest
-    return_content: yes
+    return_content: true
   register: promtail_latest
   when: not promtail_binary.stat.exists
 
 - name: Set promtail version
-  set_fact:
+  ansible.builtin.set_fact:
     promtail_version: "{{ promtail_latest.json.tag_name | regex_replace('^v', '') }}"
   when: not promtail_binary.stat.exists
 
 - name: Download promtail
-  unarchive:
+  ansible.builtin.unarchive:
     src: "https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip"
     dest: /tmp
-    remote_src: yes
+    remote_src: true
   when: not promtail_binary.stat.exists
 
 - name: Install promtail binary
-  copy:
+  ansible.builtin.copy:
     src: /tmp/promtail-linux-amd64
     dest: /usr/local/bin/promtail
-    remote_src: yes
-    mode: '0755'
+    remote_src: true
+    mode: "0755"
     owner: root
     group: root
   when: not promtail_binary.stat.exists
   notify: Restart promtail
 
 - name: Create promtail user
-  user:
+  ansible.builtin.user:
     name: promtail
-    system: yes
+    system: true
     shell: /bin/false
-    create_home: no
-    groups: adm  # For reading /var/log files
+    create_home: false
+    groups: adm # For reading /var/log files
 
 - name: Create promtail config directory
-  file:
+  ansible.builtin.file:
     path: /etc/promtail
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Create promtail data directory
-  file:
+  ansible.builtin.file:
     path: /var/lib/promtail
     state: directory
     owner: promtail
     group: promtail
-    mode: '0755'
+    mode: "0755"
 
 - name: Deploy promtail configuration
-  template:
+  ansible.builtin.template:
     src: promtail-config.yml.j2
     dest: /etc/promtail/promtail-config.yml
-    mode: '0644'
+    mode: "0644"
   notify: Restart promtail
 
 - name: Create promtail systemd service
-  copy:
+  ansible.builtin.copy:
     content: |
       [Unit]
       Description=Promtail Log Shipper
@@ -87,26 +87,14 @@
       [Install]
       WantedBy=multi-user.target
     dest: /etc/systemd/system/promtail.service
-    mode: '0644'
+    mode: "0644"
   notify:
     - Reload systemd
     - Restart promtail
 
 - name: Start and enable promtail
-  systemd:
+  ansible.builtin.systemd:
     name: promtail
     state: started
-    enabled: yes
-    daemon_reload: yes
-
-# Handlers
-- name: Reload systemd
-  systemd:
-    daemon_reload: yes
-  listen: Reload systemd
-
-- name: Restart promtail
-  systemd:
-    name: promtail
-    state: restarted
-  listen: Restart promtail
+    enabled: true
+    daemon_reload: true

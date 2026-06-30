@@ -1,9 +1,8 @@
+---
 # =============================================================================
 # Loki Configuration
 # =============================================================================
-# Log aggregation for rcj-vpc-nyc3 infrastructure
-#
-# Retention: 14 days locally, then archive to Spaces (configured separately)
+# Log aggregation — 14 day local retention, optional Spaces archival.
 # =============================================================================
 
 auth_enabled: false
@@ -50,7 +49,7 @@ limits_config:
   ingestion_burst_size_mb: 32
   max_entries_limit_per_query: 5000
   max_query_series: 500
-  retention_period: 336h  # 14 days
+  retention_period: 336h # 14 days
 
 # =============================================================================
 # Compactor (Retention Management)
@@ -68,7 +67,7 @@ compactor:
 #
 # storage_config:
 #   aws:
-#     s3: s3://access_key:secret_key@nyc3.digitaloceanspaces.com/rcj-logs-nyc3
+#     s3: s3://access_key:secret_key@<region>.digitaloceanspaces.com/<project_name>-logs-<region>
 #     s3forcepathstyle: true
 #   tsdb_shipper:
 #     active_index_directory: /loki/tsdb-index

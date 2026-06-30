@@ -3,12 +3,12 @@
 # =============================================================================
 ---
 - name: Update apt cache
-  apt:
-    update_cache: yes
+  ansible.builtin.apt:
+    update_cache: true
     cache_valid_time: 3600
 
 - name: Install essential packages
-  apt:
+  ansible.builtin.apt:
     name:
       - curl
       - wget
@@ -26,25 +26,25 @@
     state: present
 
 - name: Set timezone
-  timezone:
+  community.general.timezone:
     name: "{{ timezone | default('America/New_York') }}"
 
 - name: Configure automatic security updates
-  apt:
+  ansible.builtin.apt:
     name: unattended-upgrades
     state: present
 
 - name: Enable automatic security updates
-  copy:
+  ansible.builtin.copy:
     content: |
       APT::Periodic::Update-Package-Lists "1";
       APT::Periodic::Unattended-Upgrade "1";
       APT::Periodic::AutocleanInterval "7";
     dest: /etc/apt/apt.conf.d/20auto-upgrades
-    mode: '0644'
+    mode: "0644"
 
 - name: Create project directory
-  file:
-    path: "{{ project_dir | default('/opt/rcj-monitoring') }}"
+  ansible.builtin.file:
+    path: "{{ project_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
