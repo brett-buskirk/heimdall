@@ -1,0 +1,62 @@
+# =============================================================================
+# Terraform Variables - Example Environment
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values.
+# NEVER commit terraform.tfvars — it contains secrets.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# DigitalOcean Authentication
+# -----------------------------------------------------------------------------
+# API token:   https://cloud.digitalocean.com/account/api/tokens
+# Spaces keys: https://cloud.digitalocean.com/spaces/access_keys
+
+do_token          = "dop_v1_your_api_token_here"
+spaces_access_id  = "your_spaces_access_key"
+spaces_secret_key = "your_spaces_secret_key"
+
+# -----------------------------------------------------------------------------
+# Project
+# -----------------------------------------------------------------------------
+# Short identifier for this deployment — prefixes all resource names and tags.
+# Use lowercase letters, numbers, and hyphens (e.g. "acme", "myco", "prod").
+
+project_name = "your-project-name"
+
+# -----------------------------------------------------------------------------
+# Infrastructure Configuration
+# -----------------------------------------------------------------------------
+
+region          = "nyc3"
+vpc_name        = "your-vpc-name"            # Name of your existing VPC
+ssh_fingerprint = "your_ssh_key_fingerprint" # From: doctl compute ssh-key list
+
+# -----------------------------------------------------------------------------
+# Management Node
+# -----------------------------------------------------------------------------
+
+management_node_size = "s-2vcpu-4gb" # ~$24/mo — minimum recommended for the full stack
+
+# Log bucket name. Leave commented out to auto-derive as "<project_name>-logs-<region>".
+# log_bucket_name = "your-custom-bucket-name"
+
+# -----------------------------------------------------------------------------
+# Security
+# -----------------------------------------------------------------------------
+
+# REQUIRED — restrict SSH to known IPs. Do not use 0.0.0.0/0 in production.
+# Replace with your actual IP(s):
+ssh_allowed_ips = ["your.home.ip/32"]
+# ssh_allowed_ips = ["203.0.113.10/32", "198.51.100.0/24"]
+
+# Set true only if NOT using Tailscale and you want Grafana publicly accessible.
+enable_public_grafana = false
+
+# -----------------------------------------------------------------------------
+# Monitoring
+# -----------------------------------------------------------------------------
+
+# Used only when enable_public_grafana = true:
+# grafana_domain = "grafana.yourdomain.com"
+
+alert_email = "alerts@yourdomain.com"
