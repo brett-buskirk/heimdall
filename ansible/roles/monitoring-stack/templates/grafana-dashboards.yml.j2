@@ -1,16 +1,16 @@
 # =============================================================================
-# Grafana Dashboard Provisioning
+# Grafana Dashboard Provisioning (Ansible Managed)
 # =============================================================================
-# Auto-loads dashboards from the dashboards folder on startup
+# Auto-loads dashboards from the dashboards folder on startup.
 # =============================================================================
 
 apiVersion: 1
 
 providers:
-  - name: 'RCJ Infrastructure'
+  - name: '{{ project_name }} Infrastructure'
     orgId: 1
-    folder: 'RCJ Infrastructure'
-    folderUid: rcj-infra
+    folder: '{{ project_name }} Infrastructure'
+    folderUid: '{{ project_name }}-infra'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30

@@ -1,7 +1,7 @@
 # =============================================================================
 # Management Node Setup Playbook
 # =============================================================================
-# Sets up the monitoring stack on the management node
+# Sets up the monitoring stack on the management node.
 #
 # Usage:
 #   ansible-playbook -i inventory/production.yml playbooks/management-node.yml
@@ -10,11 +10,10 @@
 - name: Configure Management Node
   hosts: management
   become: true
-  
+
   vars:
-    project_dir: /opt/rcj-monitoring
     docker_compose_version: "2.24.0"
-  
+
   roles:
     - common
     - security
@@ -23,23 +22,23 @@
 
   post_tasks:
     - name: Display access information
-      debug:
+      ansible.builtin.debug:
         msg: |
           ═══════════════════════════════════════════════════════════
-          🏔️  Management Node Setup Complete!
+          Management Node Setup Complete — {{ project_name }}
           ═══════════════════════════════════════════════════════════
-          
+
           Grafana:      http://{{ ansible_host }}:3000
           Prometheus:   http://{{ ansible_host }}:9090
           Alertmanager: http://{{ ansible_host }}:9093
-          
+
           Default Grafana credentials:
-            Username: admin
-            Password: (set in .env file)
-          
+            Username: {{ grafana_admin_user | default('admin') }}
+            Password: (set in {{ project_dir }}/.env)
+
           Next steps:
           1. Set up Tailscale for secure remote access
-          2. Run the agent deployment playbook on other servers
-          3. Import additional dashboards as needed
-          
+          2. Run the agent deployment playbook on your app servers
+          3. Check Grafana — dashboards are provisioned automatically
+
           ═══════════════════════════════════════════════════════════

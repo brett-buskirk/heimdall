@@ -3,10 +3,10 @@
 # =============================================================================
 ---
 - name: Create monitoring directory structure
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
   loop:
     - "{{ project_dir }}"
     - "{{ project_dir }}/prometheus"
@@ -20,91 +20,91 @@
 # Copy Configuration Files
 # ---------------------------------------------------------------------------
 - name: Copy Docker Compose file
-  template:
+  ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ project_dir }}/docker-compose.yml"
-    mode: '0644'
+    mode: "0644"
 
 - name: Copy environment file
-  template:
+  ansible.builtin.template:
     src: env.j2
     dest: "{{ project_dir }}/.env"
-    mode: '0600'
+    mode: "0600"
 
 - name: Copy Prometheus configuration
-  template:
+  ansible.builtin.template:
     src: prometheus.yml.j2
     dest: "{{ project_dir }}/prometheus/prometheus.yml"
-    mode: '0644'
+    mode: "0644"
   notify: Restart Prometheus
 
 - name: Copy Prometheus alerting rules
-  copy:
+  ansible.builtin.copy:
     src: alerts.yml
     dest: "{{ project_dir }}/prometheus/alerts.yml"
-    mode: '0644'
+    mode: "0644"
   notify: Restart Prometheus
 
 - name: Copy Loki configuration
-  copy:
+  ansible.builtin.copy:
     src: loki-config.yml
     dest: "{{ project_dir }}/loki/loki-config.yml"
-    mode: '0644'
+    mode: "0644"
   notify: Restart Loki
 
 - name: Copy Promtail configuration
-  template:
+  ansible.builtin.template:
     src: promtail-config.yml.j2
     dest: "{{ project_dir }}/promtail/promtail-config.yml"
-    mode: '0644'
+    mode: "0644"
   notify: Restart Promtail
 
 - name: Copy Alertmanager configuration
-  template:
+  ansible.builtin.template:
     src: alertmanager.yml.j2
     dest: "{{ project_dir }}/alertmanager/alertmanager.yml"
-    mode: '0644'
+    mode: "0644"
   notify: Restart Alertmanager
 
 - name: Copy Grafana datasources configuration
-  copy:
+  ansible.builtin.copy:
     src: grafana-datasources.yml
     dest: "{{ project_dir }}/grafana/provisioning/datasources/datasources.yml"
-    mode: '0644'
+    mode: "0644"
 
 - name: Copy Grafana dashboards configuration
-  copy:
-    src: grafana-dashboards.yml
+  ansible.builtin.template:
+    src: grafana-dashboards.yml.j2
     dest: "{{ project_dir }}/grafana/provisioning/dashboards/dashboards.yml"
-    mode: '0644'
+    mode: "0644"
 
 - name: Copy Grafana dashboard files
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "{{ project_dir }}/grafana/provisioning/dashboards/"
-    mode: '0644'
+    mode: "0644"
   with_fileglob:
     - "../files/dashboards/*.json"
-  ignore_errors: yes
+  failed_when: false
 
 # ---------------------------------------------------------------------------
 # Start the Stack
 # ---------------------------------------------------------------------------
 - name: Pull Docker images
-  command: docker compose pull
+  ansible.builtin.command: docker compose pull
   args:
     chdir: "{{ project_dir }}"
   changed_when: false
 
 - name: Start monitoring stack
-  command: docker compose up -d
+  ansible.builtin.command: docker compose up -d
   args:
     chdir: "{{ project_dir }}"
   register: compose_result
   changed_when: "'Started' in compose_result.stdout or 'Created' in compose_result.stdout"
 
 - name: Wait for Grafana to be ready
-  uri:
+  ansible.builtin.uri:
     url: "http://localhost:3000/api/health"
     method: GET
     status_code: 200

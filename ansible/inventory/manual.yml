@@ -1,39 +1,33 @@
+---
 # =============================================================================
 # Ansible Inventory - Manual Configuration
 # =============================================================================
-# Use this inventory file until Terraform auto-generates production.yml
-# Update IP addresses after infrastructure deployment
+# Use this file for your first run, or when not using Terraform.
+# After terraform apply, use the auto-generated inventory/production.yml instead.
+#
+# Replace all placeholder values (CAPS) with your actual IPs/hostnames.
 # =============================================================================
 
 all:
   children:
-    # Management/Monitoring infrastructure
     management:
       hosts:
-        rcj-management:
-          # UPDATE THIS after terraform apply
+        # Replace with <project_name>-management after terraform apply
+        management-node:
           ansible_host: MANAGEMENT_NODE_PUBLIC_IP
           private_ip: MANAGEMENT_NODE_PRIVATE_IP
           ansible_user: root
           ansible_python_interpreter: /usr/bin/python3
 
-    # Application servers (targets for monitoring agents)
     application_servers:
       hosts:
-        rc-journey-wp:
-          ansible_host: YOUR_WP_DROPLET_IP
-          private_ip: 10.108.0.2
-          ansible_user: root
-          ansible_python_interpreter: /usr/bin/python3
-
-        foundry-vtt:
-          ansible_host: YOUR_FOUNDRY_DROPLET_IP
-          private_ip: 10.108.0.3
-          ansible_user: root
-          ansible_python_interpreter: /usr/bin/python3
+        # Add your monitored servers here. Example:
+        # my-app-server:
+        #   ansible_host: YOUR_SERVER_PUBLIC_IP
+        #   private_ip: YOUR_SERVER_PRIVATE_IP
+        #   ansible_user: root
+        #   ansible_python_interpreter: /usr/bin/python3
 
   vars:
-    # Management node connection info (for agent configs)
-    # UPDATE THESE after terraform apply
     prometheus_server: MANAGEMENT_NODE_PRIVATE_IP
     loki_server: MANAGEMENT_NODE_PRIVATE_IP

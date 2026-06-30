@@ -1,3 +1,4 @@
+---
 # =============================================================================
 # Grafana Datasource Provisioning
 # =============================================================================
@@ -30,9 +31,9 @@ datasources:
       maxLines: 1000
       derivedFields:
         - datasourceUid: prometheus
-          matcherRegex: 'trace_id=(\w+)'
+          matcherRegex: "trace_id=(\\w+)"
           name: TraceID
-          url: '$${__value.raw}'
+          url: "$${__value.raw}"
 
   # Alertmanager
   - name: Alertmanager

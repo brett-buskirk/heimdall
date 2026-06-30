@@ -3,8 +3,8 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    environment: {{ environment | default('production') }}
-    vpc: rcj-vpc-nyc3
+    environment: {{ deploy_environment | default('production') }}
+    project: {{ project_name }}
 
 alerting:
   alertmanagers:
@@ -20,15 +20,16 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
         labels:
-          instance: 'rcj-management'
+          instance: '{{ inventory_hostname }}'
 
   - job_name: 'node-exporter-management'
     static_configs:
       - targets: ['node-exporter:9100']
         labels:
-          instance: 'rcj-management'
+          instance: '{{ inventory_hostname }}'
           role: 'management'
 
+  # Application server node exporters — populated from Ansible inventory
   - job_name: 'node-exporter-apps'
     static_configs:
 {% for host in groups['application_servers'] | default([]) %}
@@ -37,17 +38,6 @@ scrape_configs:
           instance: '{{ host }}'
           role: 'application'
 {% endfor %}
-      # Manual entries (update after agent deployment)
-      - targets: ['10.108.0.2:9100']
-        labels:
-          instance: 'rc-journey-wp'
-          role: 'webserver'
-          app: 'wordpress'
-      - targets: ['10.108.0.3:9100']
-        labels:
-          instance: 'foundry-vtt'
-          role: 'gameserver'
-          app: 'foundry'
 
   - job_name: 'loki'
     static_configs:

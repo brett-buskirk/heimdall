@@ -1,39 +1,47 @@
+---
 # =============================================================================
 # Ansible Group Variables - All Hosts
 # =============================================================================
-# Global variables for the rcj-infra project
+# Set project_name and vpc_cidr before running any playbook.
+# All other values have sensible defaults but should be reviewed.
 # =============================================================================
+
+# -----------------------------------------------------------------------------
+# Project (REQUIRED — must match the value set in terraform.tfvars)
+# -----------------------------------------------------------------------------
+project_name: "your-project-name"
 
 # -----------------------------------------------------------------------------
 # Environment
 # -----------------------------------------------------------------------------
-environment: production
+deploy_environment: production
 timezone: America/New_York
 
 # -----------------------------------------------------------------------------
-# VPC Configuration
+# VPC Configuration (REQUIRED — set to your VPC's CIDR block)
 # -----------------------------------------------------------------------------
-vpc_cidr: "10.108.0.0/20"
+# Find your VPC CIDR in the DigitalOcean console or via:
+#   doctl vpcs list
+vpc_cidr: "10.x.x.x/xx"
 
 # -----------------------------------------------------------------------------
 # Monitoring Configuration
 # -----------------------------------------------------------------------------
-project_dir: /opt/rcj-monitoring
+project_dir: "/opt/{{ project_name }}-monitoring"
 grafana_admin_user: admin
 # grafana_admin_password: SET_IN_VAULT_OR_COMMAND_LINE
-grafana_root_url: "http://localhost:3000"  # Update to your Tailscale hostname or domain
+grafana_root_url: "http://localhost:3000" # Update to your Tailscale hostname or domain
 
 # Alert configuration
-alert_email: "alerts@yourdomain.com"  # Update to your alert destination
+alert_email: "alerts@yourdomain.com" # Update to your alert destination
 
-# SMTP Configuration (for email alerts)
-# Uncomment and configure if using email alerts
+# SMTP Configuration (for email alerts — uncomment and configure to enable)
 # smtp_host: "smtp.mailgun.org:587"
 # smtp_user: ""
 # smtp_password: ""
 
 # -----------------------------------------------------------------------------
-# Management Node
+# Management Node (auto-populated from Terraform inventory when using production.yml)
 # -----------------------------------------------------------------------------
-loki_server: "10.x.x.x"  # Set to management node VPC IP after terraform output
-prometheus_server: "10.x.x.x"  # Set to management node VPC IP after terraform output
+loki_server: "10.x.x.x" # Set to management node VPC IP after terraform output
+prometheus_server: "10.x.x.x" # Set to management node VPC IP after terraform output

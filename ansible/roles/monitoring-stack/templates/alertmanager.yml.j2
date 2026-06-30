@@ -21,11 +21,6 @@ route:
       receiver: 'email-critical'
       group_wait: 10s
       repeat_interval: 1h
-    - match:
-        service: foundry
-      receiver: 'email-critical'
-      group_wait: 10s
-      repeat_interval: 30m
 
 receivers:
   - name: 'email-alerts'
@@ -33,7 +28,7 @@ receivers:
       - to: '{{ alert_email | default("alerts@yourdomain.com") }}'
         send_resolved: true
         headers:
-          Subject: '[RCJ-Infra] {% raw %}{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}{% endraw %}'
+          Subject: '[{{ project_name | upper }}] {% raw %}{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}{% endraw %}'
 
   - name: 'email-critical'
     email_configs:
