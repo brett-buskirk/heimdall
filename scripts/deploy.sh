@@ -69,6 +69,7 @@ fi
 
 # Start the monitoring stack
 echo -e "${GREEN}Starting monitoring stack...${NC}"
+# shellcheck disable=SC2029  # $REMOTE_DIR intentionally expands on the client before SSH receives it
 ssh "$REMOTE_USER@$DROPLET_IP" "cd $REMOTE_DIR && docker compose pull && docker compose up -d"
 
 echo ""

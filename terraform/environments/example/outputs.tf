@@ -48,6 +48,11 @@ output "vpc_nodes" {
   ]
 }
 
+output "alert_email" {
+  description = "Alert email address (also configure in ansible/group_vars/all.yml)."
+  value       = var.alert_email
+}
+
 output "grafana_url" {
   description = "URL to access Grafana"
   value = var.enable_public_grafana && var.grafana_domain != "" ? (

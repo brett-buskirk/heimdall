@@ -20,13 +20,13 @@ all:
           ansible_python_interpreter: /usr/bin/python3
 
     application_servers:
-      hosts:
-        # Add your monitored servers here. Example:
-        # my-app-server:
-        #   ansible_host: YOUR_SERVER_PUBLIC_IP
-        #   private_ip: YOUR_SERVER_PRIVATE_IP
-        #   ansible_user: root
-        #   ansible_python_interpreter: /usr/bin/python3
+      # Add your monitored servers here (uncomment and populate):
+      # my-app-server:
+      #   ansible_host: YOUR_SERVER_PUBLIC_IP
+      #   private_ip: YOUR_SERVER_PRIVATE_IP
+      #   ansible_user: root
+      #   ansible_python_interpreter: /usr/bin/python3
+      hosts: {}
 
   vars:
     prometheus_server: MANAGEMENT_NODE_PRIVATE_IP
