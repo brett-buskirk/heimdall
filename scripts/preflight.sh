@@ -40,7 +40,6 @@ header "Tools"
 if command -v terraform &>/dev/null; then
     TF_VER=$(terraform version -json 2>/dev/null | grep -o '"terraform_version":"[^"]*"' | grep -o '[0-9][^"]*' || terraform version | grep -oP '[\d.]+' | head -1)
     TF_MAJOR=$(echo "$TF_VER" | cut -d. -f1)
-    TF_MINOR=$(echo "$TF_VER" | cut -d. -f2)
     if [ "${TF_MAJOR}" -ge 1 ]; then
         pass "terraform ${TF_VER}"
     else
