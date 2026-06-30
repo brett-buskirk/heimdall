@@ -298,3 +298,135 @@ The generated inventory includes all VPC nodes discovered via the `digitalocean_
 **Never commit `terraform.tfvars` or `.env`.** Both are in `.gitignore`. Only ever commit `*.example` files. Verify with `git status` before pushing.
 
 **Grafana password**: set `GRAFANA_ADMIN_PASSWORD` in `.env` before running the playbook. The playbook will fail with a clear error if it's not set.
+
+---
+
+## Pre-deploy checklist
+
+Run the preflight script before your first `terraform apply` to catch missing tools or unfilled placeholders:
+
+```bash
+./scripts/preflight.sh
+```
+
+It checks tool versions, verifies that `terraform.tfvars` and `group_vars/all.yml` have been populated, confirms that `ssh_allowed_ips` is not open to the world, and validates that the DigitalOcean CLI is authenticated. Fix any failures it reports before proceeding.
+
+---
+
+## Remote state backend (recommended for teams)
+
+By default, Terraform stores state locally in `terraform/environments/example/terraform.tfstate`. This is fine for solo deployments but creates a problem for teams: two people can't safely run `terraform apply` against the same state at the same time, and local state is lost if the workstation is wiped.
+
+DigitalOcean Spaces is S3-compatible and works as a remote state backend with locking via DynamoDB (or without locking, which is usually acceptable for small teams).
+
+### Set up a state bucket
+
+Create a Spaces bucket for state storage. Name it something like `<project_name>-terraform-state`. It should be in the same region as your other resources:
+
+```bash
+doctl spaces bucket create <project_name>-terraform-state --region nyc3
+```
+
+Keep the bucket **private** and do not store it alongside application logs. It holds your Terraform state, which includes resource IDs and (in some providers) sensitive outputs.
+
+### Configure the backend
+
+The backend block is already in `terraform/environments/example/main.tf` as a comment. Uncomment and fill it in:
+
+```hcl
+backend "s3" {
+  endpoint = "nyc3.digitaloceanspaces.com"
+  bucket   = "acme-terraform-state"         # your state bucket name
+  key      = "terraform/acme/terraform.tfstate"
+
+  # Required by the S3 backend; ignored by DO Spaces
+  region                      = "us-east-1"
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_region_validation      = true
+  force_path_style            = true
+
+  # Spaces credentials — use the same key pair as spaces_access_id/spaces_secret_key
+  # Pass via environment variables rather than hardcoding:
+  #   export AWS_ACCESS_KEY_ID=<spaces_access_key_id>
+  #   export AWS_SECRET_ACCESS_KEY=<spaces_secret_key>
+}
+```
+
+Pass Spaces credentials as environment variables (the S3 backend reads `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`):
+
+```bash
+export AWS_ACCESS_KEY_ID=<your_spaces_access_key_id>
+export AWS_SECRET_ACCESS_KEY=<your_spaces_secret_key>
+```
+
+### Migrate existing local state
+
+If you have existing local state, migrate it to the remote backend with `terraform init -migrate-state`. Terraform will prompt you to confirm the migration:
+
+```bash
+cd terraform/environments/example
+terraform init -migrate-state
+```
+
+After migration, the local `terraform.tfstate` file can be deleted (but keep `.terraform/` — it caches provider plugins).
+
+### State locking
+
+The S3 backend supports optional DynamoDB-based state locking, but DigitalOcean does not offer a managed DynamoDB equivalent. For most small teams the risk of a concurrent apply race is low. If you need locking, consider self-hosting a locking proxy (e.g. `terraform-backend-http`) or using a workspace-per-environment strategy.
+
+---
+
+## Teardown
+
+### Stop the stack first (recommended)
+
+Before destroying infrastructure, stop the monitoring stack cleanly to avoid orphaned processes and to give Tailscale time to deregister the node:
+
+```bash
+ssh root@<management_node_ip> "cd /opt/<project_name>-monitoring && docker compose down"
+```
+
+### Remove from Tailscale
+
+If the management node is enrolled in Tailscale, remove it from your tailnet before destroying the Droplet, so the entry doesn't linger in the admin console:
+
+```bash
+# On the management node:
+ssh root@<management_node_ip> "tailscale logout"
+```
+
+Or remove it via the Tailscale admin console at tailscale.com/admin/machines.
+
+### Destroy infrastructure
+
+```bash
+cd terraform/environments/example
+
+# Option A — destroy compute only, keep the log bucket and its data
+terraform destroy \
+  -target=module.management_node \
+  -target=module.management_firewall
+
+# Option B — full teardown including the Spaces bucket
+# Note: the bucket must be empty first (Terraform will error if it has objects)
+terraform destroy
+```
+
+If the Spaces bucket contains objects and `terraform destroy` fails, empty it first:
+
+```bash
+doctl spaces object remove <bucket-name> --recursive
+# Then re-run terraform destroy
+```
+
+### Clean up local files
+
+```bash
+# Remove the auto-generated Ansible inventory
+rm -f ansible/inventory/production.yml
+
+# If using local state, remove it too
+rm -f terraform/environments/example/terraform.tfstate
+rm -f terraform/environments/example/terraform.tfstate.backup
+```
