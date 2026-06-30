@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Terraform: fmt, validate, tflint
+  # ---------------------------------------------------------------------------
+  terraform:
+    name: Terraform (fmt · validate · tflint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive terraform/
+
+      - name: terraform init
+        run: terraform -chdir=terraform/environments/example init -backend=false
+
+      - name: terraform validate
+        run: terraform -chdir=terraform/environments/example validate
+
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: tflint init
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: tflint
+        run: tflint --chdir=terraform/environments/example
+
+  # ---------------------------------------------------------------------------
+  # Terraform security: tfsec
+  # ---------------------------------------------------------------------------
+  security:
+    name: Terraform security (tfsec)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: terraform/
+          soft_fail: true   # advisory until baseline reviewed
+
+  # ---------------------------------------------------------------------------
+  # Ansible: ansible-lint
+  # ---------------------------------------------------------------------------
+  ansible:
+    name: Ansible (ansible-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install ansible-lint
+          ansible-galaxy collection install community.general
+
+      - name: ansible-lint
+        run: ansible-lint ansible/
+
+  # ---------------------------------------------------------------------------
+  # YAML: yamllint
+  # ---------------------------------------------------------------------------
+  yaml:
+    name: YAML (yamllint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: yamllint
+        run: yamllint .
+
+  # ---------------------------------------------------------------------------
+  # Shell: shellcheck
+  # ---------------------------------------------------------------------------
+  shell:
+    name: Shell (shellcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: ./scripts
+
+  # ---------------------------------------------------------------------------
+  # Prometheus alert rules: syntax check + unit tests
+  # ---------------------------------------------------------------------------
+  prometheus:
+    name: Prometheus rules (promtool)
+    runs-on: ubuntu-latest
+    env:
+      PROMETHEUS_VERSION: "2.51.0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install promtool
+        run: |
+          mkdir -p /tmp/prometheus
+          curl -sSL \
+            "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz" \
+            | tar xz -C /tmp/prometheus --strip-components=1
+          sudo mv /tmp/prometheus/promtool /usr/local/bin/promtool
+
+      - name: Check alert rule syntax
+        run: |
+          promtool check rules docker/monitoring/prometheus/alerts.yml
+          promtool check rules ansible/roles/monitoring-stack/files/alerts.yml
+          promtool check rules examples/wordpress-foundry/alerts.yml
+
+      - name: Run alert rule unit tests
+        run: promtool test rules tests/prometheus/alerts_test.yml

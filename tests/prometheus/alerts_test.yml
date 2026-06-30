@@ -1,0 +1,111 @@
+# Prometheus alert rule unit tests — run with:
+#   promtool test rules tests/prometheus/alerts_test.yml
+
+rule_files:
+  - ../../docker/monitoring/prometheus/alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  # ---------------------------------------------------------------------------
+  # InstanceDown — fires when up == 0 for 2 minutes
+  # ---------------------------------------------------------------------------
+
+  # The alert should fire after the condition has been true for 2 minutes.
+  # With evaluation_interval=1m: pending starts at t=1m (up first drops to 0),
+  # fires at t=3m (pending for 2 minutes).
+  - interval: 1m
+    input_series:
+      - series: 'up{instance="app-server-1",job="node-exporter-apps"}'
+        values: '1 0 0 0 0'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: InstanceDown
+        exp_alerts: []          # pending — only 1m so far, for: 2m not reached
+      - eval_time: 3m
+        alertname: InstanceDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              instance: app-server-1
+              job: node-exporter-apps
+            exp_annotations:
+              summary: "Instance app-server-1 is down"
+              description: "app-server-1 (node-exporter-apps) has been down for more than 2 minutes."
+
+  # The alert must NOT fire when up == 1.
+  - interval: 1m
+    input_series:
+      - series: 'up{instance="app-server-1",job="node-exporter-apps"}'
+        values: '1+0x5'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: InstanceDown
+        exp_alerts: []
+
+  # ---------------------------------------------------------------------------
+  # HighMemoryUsage — fires when memory usage > 90% for 5 minutes
+  # Expression: (1 - (MemAvailable / MemTotal)) * 100 > 90
+  # ---------------------------------------------------------------------------
+
+  # 8 GB total, 512 MB available → ~93.75% usage → alert fires.
+  # CriticalMemoryUsage (>95%) does NOT fire at 93.75%.
+  - interval: 1m
+    input_series:
+      - series: 'node_memory_MemTotal_bytes{instance="app-server-1"}'
+        values: '8589934592+0x5'     # 8 GB, constant
+      - series: 'node_memory_MemAvailable_bytes{instance="app-server-1"}'
+        values: '536870912+0x5'      # 512 MB, constant → 93.75% used
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: HighMemoryUsage
+        exp_alerts: []               # pending for 4m — for: 5m not reached
+      - eval_time: 5m
+        alertname: HighMemoryUsage
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              instance: app-server-1
+            exp_annotations:
+              summary: "High memory usage on app-server-1"
+
+  # The alert must NOT fire when memory usage is below 90%.
+  # 8 GB total, 4 GB available → 50% usage.
+  - interval: 1m
+    input_series:
+      - series: 'node_memory_MemTotal_bytes{instance="app-server-1"}'
+        values: '8589934592+0x5'
+      - series: 'node_memory_MemAvailable_bytes{instance="app-server-1"}'
+        values: '4294967296+0x5'     # 4 GB → 50% used
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: HighMemoryUsage
+        exp_alerts: []
+
+  # ---------------------------------------------------------------------------
+  # DiskSpaceLow — fires when filesystem free < 20% for 5 minutes
+  # Expression: (avail / size) * 100 < 20
+  # ---------------------------------------------------------------------------
+
+  # 100 GB disk, 10 GB free → 10% free → alert fires.
+  # DiskSpaceCritical (<10%) does NOT fire at exactly 10%.
+  - interval: 1m
+    input_series:
+      - series: 'node_filesystem_size_bytes{instance="app-server-1",mountpoint="/",fstype="ext4"}'
+        values: '107374182400+0x5'   # 100 GB, constant
+      - series: 'node_filesystem_avail_bytes{instance="app-server-1",mountpoint="/",fstype="ext4"}'
+        values: '10737418240+0x5'    # 10 GB → 10% free
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: DiskSpaceLow
+        exp_alerts: []               # pending for 4m — for: 5m not reached
+      - eval_time: 5m
+        alertname: DiskSpaceLow
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              instance: app-server-1
+              mountpoint: /
+              fstype: ext4
+            exp_annotations:
+              summary: "Low disk space on app-server-1"

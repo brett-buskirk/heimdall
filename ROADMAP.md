@@ -42,8 +42,9 @@
 
 ## v0.5.0 — CI & validation
 
-- [ ] `.github/workflows/ci.yml` — `terraform fmt`, `terraform validate`, `tflint`, `ansible-lint`, `yamllint`, `shellcheck`
-- [ ] Dependabot wired for GitHub Actions and Terraform
+- [ ] `.github/workflows/ci.yml` — `terraform fmt`, `terraform validate`, `tflint`, `ansible-lint`, `yamllint`, `shellcheck`, `promtool check rules`, `promtool test rules`, `tfsec`
+- [ ] `tests/prometheus/alerts_test.yml` — unit tests for node-health and monitoring-stack alert rules
+- [x] Dependabot wired for GitHub Actions and Terraform *(done in Phase 0)*
 - [ ] All validation gates required before merge
 
 ## v1.0.0 — Template release
@@ -60,3 +61,4 @@
 - [ ] Second cloud provider (AWS, Hetzner)
 - [ ] HA / multi-node management setup
 - [ ] Remote state backend as Terraform-managed Spaces bucket (IaC-all-the-way-down)
+- [ ] Ansible Molecule for role-level integration testing
