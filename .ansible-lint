@@ -1,0 +1,9 @@
+---
+# https://ansible.readthedocs.io/projects/lint/configuring/
+
+# Skip role-name rule: our roles use hyphenated names (node-exporter,
+# monitoring-stack, promtail-agent) which is valid Ansible convention but
+# violates the Galaxy-publishing pattern. These are internal roles, not
+# Galaxy packages, so the restriction doesn't apply.
+skip_list:
+  - role-name
