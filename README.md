@@ -106,8 +106,7 @@ heimdall/
 ├── examples/
 │   └── wordpress-foundry/         # App-specific overlay example
 ├── docs/
-│   ├── ABOUT.md                   # Plain-language overview
-│   └── ARCHITECTURE.md            # → symlink or see ARCHITECTURE.md at root
+│   └── ABOUT.md                   # Plain-language overview
 └── scripts/
     ├── deploy.sh                  # Manual sync + restart (non-Ansible path)
     └── setup-tailscale.sh         # Tailscale install helper
