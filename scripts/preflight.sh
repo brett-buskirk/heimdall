@@ -144,6 +144,12 @@ if [ -f "$ALL_VARS" ]; then
     else
         pass "vpc_cidr appears to be configured"
     fi
+    # Check grafana_admin_password has been set
+    if grep -qE 'grafana_admin_password:\s*"CHANGE_ME"' "$ALL_VARS" 2>/dev/null; then
+        fail "grafana_admin_password is still CHANGE_ME — set a real password in group_vars/all.yml"
+    else
+        pass "grafana_admin_password appears to be configured"
+    fi
 else
     fail "ansible/inventory/group_vars/all.yml not found"
 fi
