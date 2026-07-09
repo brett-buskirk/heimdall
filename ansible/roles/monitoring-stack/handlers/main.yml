@@ -1,0 +1,24 @@
+---
+- name: Restart Prometheus
+  ansible.builtin.command: docker compose restart prometheus
+  args:
+    chdir: "{{ project_dir }}"
+  changed_when: true
+
+- name: Restart Loki
+  ansible.builtin.command: docker compose restart loki
+  args:
+    chdir: "{{ project_dir }}"
+  changed_when: true
+
+- name: Restart Promtail
+  ansible.builtin.command: docker compose restart promtail
+  args:
+    chdir: "{{ project_dir }}"
+  changed_when: true
+
+- name: Restart Alertmanager
+  ansible.builtin.command: docker compose restart alertmanager
+  args:
+    chdir: "{{ project_dir }}"
+  changed_when: true
