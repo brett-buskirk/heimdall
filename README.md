@@ -94,8 +94,8 @@ heimdall/
 │   │   ├── monitoring-stack/      # Full observability stack
 │   │   ├── node-exporter/         # Metrics agent
 │   │   └── promtail-agent/        # Log shipping agent
-│   ├── group_vars/all.yml         # Deployment variables
 │   └── inventory/                 # Inventory files (generated, gitignored)
+│       └── group_vars/all.yml     # Deployment variables
 ├── docker/monitoring/             # Static configs (mirrors Ansible output)
 │   ├── docker-compose.yml
 │   ├── prometheus/
@@ -135,7 +135,7 @@ cd heimdall
 cp terraform/environments/example/terraform.tfvars.example \
    terraform/environments/example/terraform.tfvars
 # Edit terraform.tfvars: do_token, project_name, vpc_name, ssh_fingerprint, ssh_allowed_ips
-# Edit ansible/group_vars/all.yml: project_name, vpc_cidr
+# Edit ansible/inventory/group_vars/all.yml: project_name, vpc_cidr
 ./scripts/preflight.sh   # verify tools and config before applying
 
 # 1. Provision infrastructure

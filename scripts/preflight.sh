@@ -126,12 +126,12 @@ fi
 # =============================================================================
 header "Ansible configuration"
 
-ALL_VARS="$PROJECT_ROOT/ansible/group_vars/all.yml"
+ALL_VARS="$PROJECT_ROOT/ansible/inventory/group_vars/all.yml"
 MANUAL_INV="$PROJECT_ROOT/ansible/inventory/manual.yml"
 PROD_INV="$PROJECT_ROOT/ansible/inventory/production.yml"
 
 if [ -f "$ALL_VARS" ]; then
-    pass "ansible/group_vars/all.yml exists"
+    pass "ansible/inventory/group_vars/all.yml exists"
     # Check project_name has been set to something real
     if grep -qE 'project_name:\s*"your-project-name"' "$ALL_VARS" 2>/dev/null; then
         fail "project_name in group_vars/all.yml is still the default — set it to your project name"
@@ -145,7 +145,7 @@ if [ -f "$ALL_VARS" ]; then
         pass "vpc_cidr appears to be configured"
     fi
 else
-    fail "ansible/group_vars/all.yml not found"
+    fail "ansible/inventory/group_vars/all.yml not found"
 fi
 
 if [ -f "$PROD_INV" ]; then

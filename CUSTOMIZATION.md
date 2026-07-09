@@ -113,7 +113,7 @@ You'll need `management_node_ip` and `management_node_private_ip` for the next s
 
 ### group_vars
 
-Edit `ansible/group_vars/all.yml`:
+Edit `ansible/inventory/group_vars/all.yml`:
 
 ```yaml
 # REQUIRED — must match terraform.tfvars
@@ -309,7 +309,7 @@ Run the preflight script before your first `terraform apply` to catch missing to
 ./scripts/preflight.sh
 ```
 
-It checks tool versions, verifies that `terraform.tfvars` and `group_vars/all.yml` have been populated, confirms that `ssh_allowed_ips` is not open to the world, and validates that the DigitalOcean CLI is authenticated. Fix any failures it reports before proceeding.
+It checks tool versions, verifies that `terraform.tfvars` and `ansible/inventory/group_vars/all.yml` have been populated, confirms that `ssh_allowed_ips` is not open to the world, and validates that the DigitalOcean CLI is authenticated. Fix any failures it reports before proceeding.
 
 ---
 

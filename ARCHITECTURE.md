@@ -155,7 +155,7 @@ Node Exporter (`:9100`) and Promtail (`:9080`) on application nodes accept conne
 
 ## Variable / parameter model
 
-A single `project_name` variable threads through the entire stack. Setting it in `terraform.tfvars` and `ansible/group_vars/all.yml` produces:
+A single `project_name` variable threads through the entire stack. Setting it in `terraform.tfvars` and `ansible/inventory/group_vars/all.yml` produces:
 
 | Resource | Derived value |
 |---|---|
