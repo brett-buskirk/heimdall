@@ -61,7 +61,8 @@ ssh_fingerprint = "ab:cd:ef:..."           # From: doctl compute ssh-key list
 management_node_size = "s-2vcpu-4gb"      # ~$24/mo — minimum recommended
 
 # Security — REQUIRED, no default
-ssh_allowed_ips = ["203.0.113.10/32"]     # Your IP(s); never use 0.0.0.0/0
+# /32 = single IP, /24 = subnet, /0 = all addresses (testing only)
+ssh_allowed_ips = ["203.0.113.10/32"]     # Your IP; restrict before going to production
 
 # Monitoring
 alert_email = "alerts@acme.com"
@@ -123,6 +124,14 @@ project_name: "acme"
 # Find it: doctl vpcs list
 vpc_cidr: "10.110.0.0/20"
 
+# REQUIRED — Grafana admin password; the playbook fails without this
+grafana_admin_password: "a-strong-password-here"
+
+# REQUIRED before running deploy-agents.yml — set to management node VPC private IP
+# Get it from: terraform output management_node_private_ip
+loki_server: "10.110.0.5"
+prometheus_server: "10.110.0.5"
+
 # Optional — update to match your setup
 deploy_environment: production
 timezone: America/New_York
@@ -162,47 +171,20 @@ all:
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `project_name` | Yes | `"your-project-name"` | Matches `terraform.tfvars`; prefixes the project directory |
-| `vpc_cidr` | Yes | `"10.x.x.x/xx"` | VPC CIDR block; used in UFW rules on all nodes |
+| `project_name` | Yes | — | Matches `terraform.tfvars`; prefixes the project directory |
+| `vpc_cidr` | Yes | — | VPC CIDR block; used in UFW rules on all nodes |
+| `grafana_admin_password` | Yes | — | Grafana admin password; the playbook fails if unset |
+| `loki_server` | Yes (agents) | — | Management node VPC private IP — required before running `deploy-agents.yml` |
+| `prometheus_server` | Yes (agents) | — | Management node VPC private IP — required before running `deploy-agents.yml` |
 | `deploy_environment` | No | `"production"` | Label applied to Prometheus external labels |
 | `timezone` | No | `"America/New_York"` | System timezone for all nodes |
 | `grafana_admin_user` | No | `"admin"` | Grafana admin username |
 | `grafana_root_url` | No | `"http://localhost:3000"` | Grafana public URL (set to Tailscale hostname) |
 | `alert_email` | No | `"alerts@yourdomain.com"` | Alertmanager alert destination |
-| `loki_server` | No | `"10.x.x.x"` | Management node VPC IP — set in inventory vars |
-| `prometheus_server` | No | `"10.x.x.x"` | Management node VPC IP — set in inventory vars |
 
 ---
 
-## Step 5 — Configure the monitoring stack environment
-
-```bash
-cp docker/monitoring/.env.example docker/monitoring/.env
-```
-
-Edit `.env`:
-
-```bash
-# Required
-GRAFANA_ADMIN_PASSWORD=a-strong-password-here
-
-# Optional: email alerts
-SMTP_ENABLED=true
-SMTP_HOST=smtp.mailgun.org:587
-SMTP_USER=your-smtp-user
-SMTP_PASSWORD=your-smtp-password
-SMTP_FROM=alerts@acme.com
-```
-
-Copy the `.env` file to the management node before running the playbook, or let the playbook copy it (it references the `project_dir`):
-
-```bash
-scp docker/monitoring/.env root@123.45.67.89:/opt/acme-monitoring/.env
-```
-
----
-
-## Step 6 — Deploy the monitoring stack
+## Step 5 — Deploy the monitoring stack
 
 Install Ansible Galaxy dependencies first:
 
@@ -219,7 +201,7 @@ ansible-playbook -i ansible/inventory/manual.yml \
 
 This installs Docker, deploys the full stack, starts all containers, and waits for Grafana to become healthy. It's idempotent — re-running it is safe.
 
-To deploy agents to your application nodes:
+To deploy agents to your application nodes, first set `loki_server` and `prometheus_server` in `ansible/inventory/group_vars/all.yml` to your management node's VPC private IP (from `terraform output management_node_private_ip`), then:
 
 ```bash
 ansible-playbook -i ansible/inventory/manual.yml \
@@ -230,7 +212,7 @@ This installs Node Exporter and Promtail as systemd services on every host in th
 
 ---
 
-## Step 7 — Set up Tailscale
+## Step 6 — Set up Tailscale
 
 On the management node:
 
@@ -247,7 +229,7 @@ After authentication, the node gets a Tailscale hostname (e.g. `acme-management`
 
 ---
 
-## Step 8 — Verify
+## Step 7 — Verify
 
 From any device on your Tailscale network:
 
@@ -293,11 +275,11 @@ The generated inventory includes all VPC nodes discovered via the `digitalocean_
 
 ## Security
 
-**`ssh_allowed_ips` is required with no default.** This is intentional — deploying with `0.0.0.0/0` is a common security mistake. The Terraform validation will reject an empty list.
+**`ssh_allowed_ips` is required with no default.** This is intentional — deploying with `0.0.0.0/0` is a common security mistake. The Terraform validation will reject an empty list. Remember that `/32` means a single specific IP address; `/0` means all addresses. Use `/32` for known IPs, `/0` only for short-lived testing.
 
-**Never commit `terraform.tfvars` or `.env`.** Both are in `.gitignore`. Only ever commit `*.example` files. Verify with `git status` before pushing.
+**Never commit `terraform.tfvars`.** It's in `.gitignore`. Only ever commit `*.example` files. Verify with `git status` before pushing.
 
-**Grafana password**: set `GRAFANA_ADMIN_PASSWORD` in `.env` before running the playbook. The playbook will fail with a clear error if it's not set.
+**Grafana password**: set `grafana_admin_password` in `ansible/inventory/group_vars/all.yml` before running the playbook. The playbook renders `.env` on the management node from a template — it does not read a local `.env` file.
 
 ---
 

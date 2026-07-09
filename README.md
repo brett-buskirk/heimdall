@@ -135,7 +135,7 @@ cd heimdall
 cp terraform/environments/example/terraform.tfvars.example \
    terraform/environments/example/terraform.tfvars
 # Edit terraform.tfvars: do_token, project_name, vpc_name, ssh_fingerprint, ssh_allowed_ips
-# Edit ansible/inventory/group_vars/all.yml: project_name, vpc_cidr
+# Edit ansible/inventory/group_vars/all.yml: project_name, vpc_cidr, grafana_admin_password
 ./scripts/preflight.sh   # verify tools and config before applying
 
 # 1. Provision infrastructure

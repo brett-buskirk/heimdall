@@ -2,8 +2,14 @@
 # =============================================================================
 # Ansible Group Variables - All Hosts
 # =============================================================================
-# Set project_name and vpc_cidr before running any playbook.
-# All other values have sensible defaults but should be reviewed.
+# REQUIRED before running any playbook:
+#   project_name        — must match terraform.tfvars
+#   vpc_cidr            — your VPC CIDR block (doctl vpcs list)
+#   grafana_admin_password — set a strong password; the playbook fails without it
+#
+# REQUIRED before running deploy-agents.yml:
+#   loki_server         — management node VPC private IP (terraform output)
+#   prometheus_server   — management node VPC private IP (terraform output)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -29,7 +35,7 @@ vpc_cidr: "10.x.x.x/xx"
 # -----------------------------------------------------------------------------
 project_dir: "/opt/{{ project_name }}-monitoring"
 grafana_admin_user: admin
-# grafana_admin_password: SET_IN_VAULT_OR_COMMAND_LINE
+grafana_admin_password: "CHANGE_ME"       # REQUIRED — set before running the playbook
 grafana_root_url: "http://localhost:3000" # Update to your Tailscale hostname or domain
 
 # Alert configuration
