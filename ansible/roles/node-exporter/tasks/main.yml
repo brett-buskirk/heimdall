@@ -82,6 +82,13 @@
     enabled: true
     daemon_reload: true
 
+# ansible_facts.packages is not populated by default fact gathering; without
+# this, the ufw guard below evaluates 'ufw' in <undefined> and errors. This
+# play runs no common/security role, so gather package facts here.
+- name: Gather installed package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
 - name: Allow node_exporter through UFW (from VPC)
   community.general.ufw:
     rule: allow
