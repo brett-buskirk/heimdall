@@ -1,0 +1,6 @@
+---
+# Pinned to match the Node Exporter image in docker/monitoring/docker-compose.yml
+# (prom/node-exporter:v1.7.0). Bump deliberately alongside the compose pin rather
+# than tracking latest — Prometheus-family release assets have stable URLs, but
+# pinning keeps agent and hub versions aligned and deploys reproducible.
+node_exporter_version: "1.7.0"
