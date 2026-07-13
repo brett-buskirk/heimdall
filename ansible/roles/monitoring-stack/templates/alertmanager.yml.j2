@@ -22,20 +22,28 @@ route:
       group_wait: 10s
       repeat_interval: 1h
 
+# Email receivers only render their email_configs when SMTP is configured.
+# Alertmanager refuses to start ("no global SMTP smarthost set") if a receiver
+# has email_configs but no smarthost, so without smtp_host these stay as bare
+# (inert) receivers — valid config that runs — and email activates once SMTP set.
 receivers:
   - name: 'email-alerts'
+{% if smtp_host is defined and smtp_host %}
     email_configs:
       - to: '{{ alert_email | default("alerts@yourdomain.com") }}'
         send_resolved: true
         headers:
           Subject: '[{{ project_name | upper }}] {% raw %}{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}{% endraw %}'
+{% endif %}
 
   - name: 'email-critical'
+{% if smtp_host is defined and smtp_host %}
     email_configs:
       - to: '{{ alert_email | default("alerts@yourdomain.com") }}'
         send_resolved: true
         headers:
           Subject: '🚨 [CRITICAL] {% raw %}{{ .CommonLabels.alertname }} on {{ .CommonLabels.instance }}{% endraw %}'
+{% endif %}
 
 inhibit_rules:
   - source_match:
