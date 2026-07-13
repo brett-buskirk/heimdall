@@ -29,7 +29,7 @@ One `terraform apply` and one `ansible-playbook` run gives any team a complete m
 | Node Exporter | Host-level metrics on every monitored node | 9100 |
 | Promtail | Log shipping from every monitored node | 9080 |
 
-**Access model:** Grafana, Prometheus, and Alertmanager are bound to private interfaces only. All access is via [Tailscale](https://tailscale.com/) — authenticated mesh VPN, no public ports.
+**Access model:** No public management ports. You reach **Grafana over [Tailscale](https://tailscale.com/)** — an authenticated mesh VPN — and Grafana is your single pane of glass. Prometheus, Loki, and Alertmanager stay VPC-internal (they're queried by Grafana over the Docker network), not exposed even on the tailnet.
 
 ---
 
@@ -147,18 +147,18 @@ ansible-playbook -i ansible/inventory/production.yml ansible/playbooks/managemen
 # 3. Deploy agents to app nodes
 ansible-playbook -i ansible/inventory/production.yml ansible/playbooks/deploy-agents.yml
 
-# 4. Install Tailscale and connect
+# 4. Install Tailscale on the node and connect
 scp scripts/setup-tailscale.sh root@<management_ip>:/tmp/
 ssh root@<management_ip> 'bash /tmp/setup-tailscale.sh && sudo tailscale up'
 ```
 
-After Tailscale is up, reach the stack at `http://<tailscale-hostname>:3000` (Grafana).
+Then put **your own device** on the same tailnet (Tailscale is a mesh — the machine you browse from needs it too; WSL2 users install the *Windows* client). Find the node's Tailscale IP with `tailscale status`, and open Grafana at `http://<node-tailscale-ip>:3000`. See [CUSTOMIZATION.md](CUSTOMIZATION.md#step-6--set-up-tailscale) for the full walkthrough, including the WSL2 gotcha.
 
 ---
 
 ## Security model
 
-All management ports (Grafana on 3000, Prometheus on 9090, Alertmanager on 9093) are bound to private interfaces and blocked at the Cloud Firewall. The only access path is Tailscale — authenticated, encrypted, and auditable. There are no public-facing management endpoints.
+There are no public-facing management endpoints. **Grafana (3000)** is reachable only over Tailscale — authenticated, encrypted, and auditable — and it's the one UI you interact with. **Prometheus (9090), Loki (3100), and Alertmanager (9093)** are locked to the VPC CIDR at the Cloud Firewall: they accept VPC-internal traffic (scraping, log ingestion) but are not exposed publicly *or* over Tailscale — Grafana reaches them internally over the Docker network.
 
 SSH is restricted to the IPs in `ssh_allowed_ips` (required, no default — see [CUSTOMIZATION.md](CUSTOMIZATION.md#security)). Node Exporter and Promtail on application nodes only accept connections from the management node's VPC private IP; they never talk cross-node or to the public internet.
 

@@ -215,7 +215,9 @@ This installs Node Exporter and Promtail as systemd services on every host in th
 
 ## Step 6 — Set up Tailscale
 
-On the management node:
+Tailscale is a mesh VPN: **both ends need it.** Putting Tailscale on the management node is only half — the device you browse from must also be on the same tailnet, or there's no tunnel between them.
+
+### 6a — Enroll the management node
 
 ```bash
 scp scripts/setup-tailscale.sh root@123.45.67.89:/tmp/
@@ -226,21 +228,41 @@ ssh root@123.45.67.89 'sudo tailscale up'
 # Follow the printed URL to authenticate
 ```
 
-After authentication, the node gets a Tailscale hostname (e.g. `acme-management`) and a stable Tailscale IP. Use either to access the stack from any authorized device.
+### 6b — Put your own device on the same tailnet
+
+Install Tailscale on the machine you'll browse from and sign in with the **same account**:
+
+- **macOS / Linux:** `curl -fsSL https://tailscale.com/install.sh | sh` then `sudo tailscale up`
+- **Windows:** install the client from [tailscale.com/download/windows](https://tailscale.com/download/windows)
+
+> **WSL2 users:** Tailscale installed *inside* WSL2 only covers the WSL2 network namespace — a browser running on the Windows side can't route through it. Install the **native Windows** client (and sign into the same tailnet) so your Windows browser can reach the node. Tailscale has to run where your browser runs.
+
+### 6c — Find the node's Tailscale IP
+
+From your device (or the node), list the tailnet and grab the node's `100.x.y.z` address:
+
+```bash
+tailscale status | grep acme-management
+#   → 100.94.12.7   acme-management   you@   linux   -
+```
+
+You can also read it from the Tailscale admin console under **Machines**.
 
 ---
 
 ## Step 7 — Verify
 
-From any device on your Tailscale network:
+From a device on your tailnet, open **Grafana** at the node's Tailscale IP:
 
 ```
-http://acme-management:3000       → Grafana (log in with admin / your password)
-http://acme-management:9090       → Prometheus (check Targets — all should be UP)
-http://acme-management:9093       → Alertmanager
+http://100.94.12.7:3000       → Grafana (log in with admin / your password)
 ```
+
+Use the raw `100.x` IP rather than the MagicDNS name — name resolution can be flaky across the WSL2/Windows boundary, but the IP always routes.
 
 In Grafana, navigate to **Infrastructure → Infrastructure Overview** to see all monitored nodes.
+
+**Only Grafana (port 3000) is reachable over Tailscale — by design.** Prometheus (9090), Loki (3100), and Alertmanager (9093) are restricted to the VPC in the firewall (VPC-internal scraping and log ingestion only), so they won't answer over the tailnet. You don't need direct access to them: Grafana queries Prometheus and Loki internally over the Docker network, and Alertmanager silences/alerts are managed through Grafana's **Alerting** UI. Grafana is your single pane of glass.
 
 ---
 
