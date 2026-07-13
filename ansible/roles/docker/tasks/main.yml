@@ -82,3 +82,12 @@
     dest: /etc/docker/daemon.json
     mode: "0644"
   notify: Restart Docker
+
+# Force the Docker restart to happen here, before the monitoring stack is
+# deployed. Docker 29+ installs default to the containerd image store; writing
+# daemon.json (classic storage-driver) and restarting flips the store, which
+# orphans any images/containers created beforehand. If the restart ran at the
+# usual end-of-play handler flush, it would wipe the already-running stack.
+# Flushing now settles the daemon on its final store before anything is pulled.
+- name: Flush handlers so the Docker daemon settles before the stack deploys
+  ansible.builtin.meta: flush_handlers
