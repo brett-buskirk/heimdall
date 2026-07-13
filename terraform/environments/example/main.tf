@@ -165,6 +165,29 @@ module "management_firewall" {
 }
 
 # =============================================================================
+# DigitalOcean Project Assignment (optional)
+# =============================================================================
+# When do_project_name is set, assign the droplet and log bucket to that
+# existing project so they don't scatter into the default project. Looked up
+# by name — Terraform does not create the project. Leaving the variable empty
+# skips this entirely and preserves DO's default-project behavior.
+# =============================================================================
+
+data "digitalocean_project" "target" {
+  count = var.do_project_name != "" ? 1 : 0
+  name  = var.do_project_name
+}
+
+resource "digitalocean_project_resources" "this" {
+  count   = var.do_project_name != "" ? 1 : 0
+  project = data.digitalocean_project.target[0].id
+  resources = [
+    module.management_node.urn,
+    module.log_retention_bucket.urn,
+  ]
+}
+
+# =============================================================================
 # Ansible Inventory (auto-generated)
 # =============================================================================
 

@@ -80,6 +80,7 @@ alert_email = "alerts@acme.com"
 | `ssh_fingerprint` | Yes | — | SSH key fingerprint registered with DigitalOcean |
 | `ssh_allowed_ips` | Yes | — | List of IPs/CIDRs allowed to SSH to the management node |
 | `region` | No | `"nyc3"` | DigitalOcean region slug |
+| `do_project_name` | No | `""` | Existing DO Project to assign resources to; empty uses your default project (looked up by name, not created) |
 | `management_node_size` | No | `"s-2vcpu-4gb"` | Droplet size for the management node |
 | `log_bucket_name` | No | `""` | Spaces bucket name; auto-derived as `<project_name>-logs-<region>` if empty |
 | `enable_public_grafana` | No | `false` | Expose Grafana publicly (not recommended — use Tailscale) |

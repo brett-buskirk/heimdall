@@ -53,6 +53,17 @@ variable "vpc_name" {
   type        = string
 }
 
+variable "do_project_name" {
+  description = <<-EOT
+    Name of an existing DigitalOcean Project to assign the droplet and log
+    bucket to. Leave empty to place them in your default project (DO's
+    behavior when resources aren't assigned). Must match an existing project
+    name exactly — Terraform looks it up, it does not create it.
+  EOT
+  type        = string
+  default     = ""
+}
+
 variable "ssh_fingerprint" {
   description = "SSH key fingerprint registered with DigitalOcean (from: doctl compute ssh-key list)"
   type        = string
