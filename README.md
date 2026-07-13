@@ -134,8 +134,10 @@ git clone https://github.com/brett-buskirk/heimdall.git
 cd heimdall
 cp terraform/environments/example/terraform.tfvars.example \
    terraform/environments/example/terraform.tfvars
-# Edit terraform.tfvars: do_token, project_name, vpc_name, ssh_fingerprint, ssh_allowed_ips
-# Edit ansible/inventory/group_vars/all.yml: project_name, vpc_cidr, grafana_admin_password
+# Edit terraform.tfvars — required: do_token, spaces_access_id, spaces_secret_key,
+#   project_name, vpc_name, ssh_fingerprint, ssh_allowed_ips  (optional: alert_email, do_project_name)
+# Edit ansible/inventory/group_vars/all.yml — required: project_name, vpc_cidr, grafana_admin_password
+#   (optional: alert_email; loki_server + prometheus_server before deploy-agents)
 ./scripts/preflight.sh   # verify tools and config before applying
 
 # 1. Provision infrastructure
