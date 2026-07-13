@@ -31,6 +31,11 @@ region          = "nyc3"
 vpc_name        = "your-vpc-name"            # Name of your existing VPC
 ssh_fingerprint = "your_ssh_key_fingerprint" # From: doctl compute ssh-key list
 
+# Assign the droplet + log bucket to an existing DigitalOcean Project.
+# Leave commented out to use your default project. Must match an existing
+# project name exactly (Terraform looks it up, it does not create it).
+# do_project_name = "your-do-project-name"
+
 # -----------------------------------------------------------------------------
 # Management Node
 # -----------------------------------------------------------------------------
