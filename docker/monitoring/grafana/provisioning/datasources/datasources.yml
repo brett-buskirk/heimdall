@@ -10,6 +10,10 @@ datasources:
   # Prometheus - Metrics
   - name: Prometheus
     type: prometheus
+    # Explicit UID so provisioned dashboards can reference it by a stable value.
+    # Dashboards pin datasource uid "prometheus"; without this Grafana assigns a
+    # random UID and panels fail with "Datasource prometheus was not found".
+    uid: prometheus
     access: proxy
     url: http://prometheus:9090
     isDefault: true
@@ -23,6 +27,7 @@ datasources:
   # Loki - Logs
   - name: Loki
     type: loki
+    uid: loki
     access: proxy
     url: http://loki:3100
     editable: false
@@ -37,6 +42,7 @@ datasources:
   # Alertmanager
   - name: Alertmanager
     type: alertmanager
+    uid: alertmanager
     access: proxy
     url: http://alertmanager:9093
     editable: false
