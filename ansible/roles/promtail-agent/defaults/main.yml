@@ -1,0 +1,6 @@
+---
+# Pinned to match the Loki/Promtail images in docker/monitoring/docker-compose.yml
+# (grafana/promtail:2.9.6). This MUST stay pinned: Loki 3.x repackaged its release
+# assets and no longer publishes promtail-linux-amd64.zip, so tracking "latest"
+# 404s. Bump deliberately alongside the compose pin, and verify the asset URL first.
+promtail_version: "2.9.6"

@@ -9,18 +9,8 @@
     path: /usr/local/bin/promtail
   register: promtail_binary
 
-- name: Get latest promtail version
-  ansible.builtin.uri:
-    url: https://api.github.com/repos/grafana/loki/releases/latest
-    return_content: true
-  register: promtail_latest
-  when: not promtail_binary.stat.exists
-
-- name: Set promtail version
-  ansible.builtin.set_fact:
-    promtail_version: "{{ promtail_latest.json.tag_name | regex_replace('^v', '') }}"
-  when: not promtail_binary.stat.exists
-
+# Version is pinned in defaults/main.yml (promtail_version), matching the
+# docker-compose image. Override per-deploy with -e if you need a different build.
 - name: Download promtail
   ansible.builtin.unarchive:
     src: "https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip"

@@ -9,18 +9,8 @@
     path: /usr/local/bin/node_exporter
   register: node_exporter_binary
 
-- name: Get latest node_exporter version
-  ansible.builtin.uri:
-    url: https://api.github.com/repos/prometheus/node_exporter/releases/latest
-    return_content: true
-  register: node_exporter_latest
-  when: not node_exporter_binary.stat.exists
-
-- name: Set node_exporter version
-  ansible.builtin.set_fact:
-    node_exporter_version: "{{ node_exporter_latest.json.tag_name | regex_replace('^v', '') }}"
-  when: not node_exporter_binary.stat.exists
-
+# Version is pinned in defaults/main.yml (node_exporter_version), matching the
+# docker-compose image. Override per-deploy with -e if you need a different build.
 - name: Download node_exporter
   ansible.builtin.unarchive:
     src: >-
