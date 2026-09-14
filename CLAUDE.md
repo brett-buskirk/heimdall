@@ -225,11 +225,11 @@ merge once added.
   `v0.1.0 — Generalize Terraform`, `v0.2.0 — Generalize Ansible`,
   `v0.3.0 — App-agnostic monitoring`, `v0.4.0 — Docs & examples`,
   `v0.5.0 — CI & validation`, `v1.0.0 — Template release`.
-- **Project board** — create a repo-linked GitHub Project (v2) named after the repo (there's
-  already a per-product project pattern: "AgentGate", "Day One", …). Add a board view with
-  Todo / In progress / Done, and file an issue per phase task, assigned to its milestone and
-  added to the board. `gh project create --owner brett-buskirk --title "Heimdall"`, then link
-  it and add items.
+- **Project board** — the estate tracks work in **Linear** now (the old GitHub Project #17 is
+  retired, and per-repo GitHub Projects are superseded by the repo's Linear project). Link this
+  repo to its Linear team via Linear's GitHub integration and file an issue per phase task,
+  assigned to its milestone — a PR/commit magic word auto-links the Linear issue, so there's no
+  manual GitHub board wiring.
 
 ### Repo metadata
 Set a generic description, topics, and (optionally) a homepage:
