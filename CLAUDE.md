@@ -44,7 +44,7 @@ into a parameterized, configurable template. Nothing in the shipped template sho
 handful of variables and gets a working stack.
 
 **Goal B — Professionalize.** Bring the repo up to the same conventions as the rest of the
-estate — rename, labels, milestones, a linked project board, a full documentation suite,
+estate — rename, labels, milestones, the repo's Linear project, a full documentation suite,
 issue/PR templates, and CI that actually validates the IaC. Make it product-worthy.
 
 Both goals ship in **independently-useful slices** (see *Phased build plan*). Each slice is
@@ -272,7 +272,7 @@ gh repo edit brett-buskirk/<newname> \
 
 **Phase 0 — Rename & scaffold conventions.** Rename the repo (see below). Add `LICENSE`,
 `CHANGELOG`, `ROADMAP`, `CONTRIBUTING`, `SECURITY`, the `.github/` templates, labels,
-milestones, and the project board. Set repo metadata/topics. (Docs can start as stubs and
+milestones, and the repo's Linear project. Set repo metadata/topics. (Docs can start as stubs and
 fill in over later phases.)
 
 **Phase 1 — Generalize Terraform.** Introduce `project_name`; remove every org default;
@@ -306,7 +306,7 @@ A new user can `git clone`, read `CUSTOMIZATION.md`, set `project_name` + a shor
 playbooks, and reach a working Grafana/Prometheus/Loki/Alertmanager stack over Tailscale —
 **with zero references to `rcj`/`rc-journey`/`foundry`/`wordpress` anywhere in the shipped
 template** (the org-specific grep returns clean outside `examples/`). The repo has the full
-docs suite, labels, milestones, a linked project board, issue/PR templates, a green CI
+docs suite, labels, milestones, a linked Linear project, issue/PR templates, a green CI
 validation pipeline, a `LICENSE`, and a tagged `v1.0.0` release. AgentGate is green on the
 final PR.
 
@@ -315,7 +315,7 @@ final PR.
 ## Renaming the repo
 
 1. Pick the name (default recommendation: **heimdall**; confirm with Brett first — it threads
-   through docs, topics, and the project board).
+   through docs, topics, and the Linear project).
 2. `gh repo rename <newname> -R brett-buskirk/rcj-infra` (GitHub auto-redirects the old URL).
 3. Update the local remote: `git remote set-url origin git@github.com:brett-buskirk/<newname>.git`,
    and rename the local directory to match.
